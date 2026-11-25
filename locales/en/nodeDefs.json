@@ -1,0 +1,975 @@
+{
+  "PonyLlamaCppModelLoader": {
+    "display_name": "Llama.cpp Model Loader-Pony",
+    "description": "Load a local GGUF model, multimodal projection, and chat handler.",
+    "inputs": {
+      "model": {
+        "name": "Model",
+        "tooltip": "Choose the GGUF main model."
+      },
+      "mmproj": {
+        "name": "Multimodal Projection",
+        "tooltip": "Choose the matching vision/audio projection. Use None for text-only models."
+      },
+      "chat_handler": {
+        "name": "Chat Handler",
+        "tooltip": "Choose a handler that matches the model. Gemma4-Thinking is only for models that support it.",
+        "options": {
+          "None": "None",
+          "LLaVA-1.5": "LLaVA-1.5",
+          "LLaVA-1.6": "LLaVA-1.6",
+          "Moondream2": "Moondream2",
+          "nanoLLaVA": "nanoLLaVA",
+          "llama3-Vision-Alpha": "llama3-Vision-Alpha",
+          "MiniCPM-v2.6": "MiniCPM-v2.6",
+          "DeepSeek-OCR": "DeepSeek-OCR",
+          "Gemma3": "Gemma3",
+          "Gemma4": "Gemma4",
+          "Gemma4-Thinking": "Gemma4 (Thinking)",
+          "Qwen2.5-VL": "Qwen2.5-VL",
+          "MinerU2.5-Pro": "MinerU2.5-Pro",
+          "Qwen3-VL": "Qwen3-VL",
+          "Qwen3-VL-Thinking": "Qwen3-VL (Thinking)",
+          "Qwen3.5": "Qwen3.5",
+          "Qwen3.5-Thinking": "Qwen3.5 (Thinking)",
+          "Qwen3.6": "Qwen3.6",
+          "Qwen3.6-Thinking": "Qwen3.6 (Thinking)",
+          "Qwen3.8": "Qwen3.8",
+          "Qwen3.8-Thinking": "Qwen3.8 (Thinking)",
+          "GLM-4.6V": "GLM-4.6V",
+          "GLM-4.6V-Thinking": "GLM-4.6V (Thinking)",
+          "GLM-4.1V-Thinking": "GLM-4.1V (Thinking)",
+          "LFM2-VL": "LFM2-VL",
+          "LFM2.5-VL": "LFM2.5-VL",
+          "Granite-Docling": "Granite-Docling",
+          "MiniCPM-v4.5": "MiniCPM-v4.5",
+          "MiniCPM-v4.5-Thinking": "MiniCPM-v4.5 (Thinking)",
+          "MiniCPM-v4.6": "MiniCPM-v4.6",
+          "MiniCPM-v4.6-Thinking": "MiniCPM-v4.6 (Thinking)",
+          "PaddleOCR-VL-1.5": "PaddleOCR-VL-1.5",
+          "Qwen3-ASR": "Qwen3-ASR",
+          "Step3-VL": "Step3-VL"
+        }
+      },
+      "n_ctx": {
+        "name": "Context Length",
+        "tooltip": "Context window size. Larger values allow more text and images but use more memory."
+      },
+      "vram_limit": {
+        "name": "VRAM Limit (GB)",
+        "tooltip": "Maximum GPU memory in GB. -1 places as many layers on the GPU as possible."
+      },
+      "image_min_tokens": {
+        "name": "Minimum Image Tokens",
+        "tooltip": "Minimum visual tokens per image. 0 lets llama.cpp choose automatically."
+      },
+      "image_max_tokens": {
+        "name": "Maximum Image Tokens",
+        "tooltip": "Maximum visual tokens per image. 0 is automatic; higher values preserve more detail but run slower."
+      },
+      "load_mtp": {
+        "name": "Load MTP",
+        "tooltip": "Enable built-in MTP speculative decoding. The selected GGUF must contain MTP layers."
+      },
+      "kv_cache_mode": {
+        "name": "KV Cache Combination",
+        "tooltip": "Set K/V cache precision together. F16 has the best quality; Q8/Q4 use less VRAM.",
+        "options": {
+          "K F16 / V F16": "K F16 / V F16 (Best Quality)",
+          "K Q8_0 / V Q8_0": "K Q8 / V Q8 (Balanced)",
+          "K Q8_0 / V Q4_0": "K Q8 / V Q4 (Lower VRAM)",
+          "K Q4_0 / V Q4_0": "K Q4 / V Q4 (Lowest VRAM)"
+        }
+      },
+      "cpu_moe": {
+        "name": "MoE Experts on CPU",
+        "tooltip": "Qwen3.6 MoE only. Moves all expert weights to CPU to save VRAM, usually slower."
+      },
+      "n_cpu_moe": {
+        "name": "First N MoE Layers on CPU",
+        "tooltip": "Qwen3.6 MoE only. Moves the first N expert layers to CPU; ignored when all experts use CPU."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Llama Model",
+        "tooltip": "Model configuration passed to instruction nodes."
+      }
+    }
+  },
+  "PonyLlamaCppInstruct": {
+    "display_name": "Llama.cpp Image/Audio/Text Instruct-Pony",
+    "description": "Run text, multi-image, video-frame, and supported audio instructions with a local llama.cpp model.",
+    "inputs": {
+      "llama_model": {
+        "name": "Llama Model",
+        "tooltip": "Connect the Llama.cpp Model Loader output."
+      },
+      "custom_prompt": {
+        "name": "User Prompt",
+        "tooltip": "Describe the task for the current image, images, video frames, or text."
+      },
+      "system_prompt": {
+        "name": "System Prompt",
+        "tooltip": "Optional system instructions. Leave empty to use the built-in general assistant prompt."
+      },
+      "inference_mode": {
+        "name": "Inference Mode",
+        "tooltip": "Choose how connected images are processed.",
+        "options": {
+          "one by one": "One by One",
+          "images": "Merge Images",
+          "video": "Video Frames",
+          "text": "Text Only"
+        }
+      },
+      "max_frames": {
+        "name": "Maximum Frames",
+        "tooltip": "Video mode only: maximum frames sampled evenly from each IMAGE batch."
+      },
+      "max_megapixels": {
+        "name": "Max Image Megapixels",
+        "tooltip": "Maximum pixels per image before inference. 0.5 MP means 524,288 pixels."
+      },
+      "seed": {
+        "name": "Seed",
+        "tooltip": "Fixed seed makes repeated runs more reproducible."
+      },
+      "unload_mode": {
+        "name": "Model Unload Mode",
+        "tooltip": "Choose when the GGUF model is released. Keeping it loaded is faster.",
+        "options": {
+          "自动": "Auto",
+          "保持加载": "Keep Loaded",
+          "运行后自动卸载": "Unload After Run",
+          "运行前后自动卸载": "Unload Before and After"
+        }
+      },
+      "parameters": {
+        "name": "Inference Parameters",
+        "tooltip": "Connect Llama.cpp Parameters to control sampling and generation length."
+      },
+      "image_bundle": {
+        "name": "Image Bundle",
+        "tooltip": "Connect the Image Bundle output from the dynamic image input companion."
+      },
+      "queue_handler": {
+        "name": "Queue Control",
+        "tooltip": "Controls execution order only. It does not carry image or video content."
+      },
+      "skill": {
+        "name": "Skill / System Prompt",
+        "tooltip": "A non-empty Skill or system prompt overrides the system prompt above."
+      },
+      "audio": {
+        "name": "Audio",
+        "tooltip": "Optional ComfyUI AUDIO input. Supported by Gemma4, Gemma4-Thinking, and Qwen3-ASR; other handlers report a clear error."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Output",
+        "tooltip": "Combined final text."
+      },
+      "1": {
+        "name": "Output List",
+        "tooltip": "One result per image group when applicable."
+      }
+    }
+  },
+  "PonyLlamaCppParameters": {
+    "display_name": "Llama.cpp Parameters-Pony",
+    "description": "Configure sampling, temperature, penalties, and Mirostat options.",
+    "inputs": {
+      "max_tokens": {
+        "name": "Max Tokens",
+        "tooltip": "Maximum total generated tokens, including thought and final answer."
+      },
+      "top_k": {
+        "name": "Top K",
+        "tooltip": "Limit sampling to the K most likely tokens. 0 disables the limit."
+      },
+      "top_p": {
+        "name": "Top P",
+        "tooltip": "Nucleus sampling probability. Lower values are more conservative."
+      },
+      "min_p": {
+        "name": "Min P",
+        "tooltip": "Discard tokens below this relative probability."
+      },
+      "typical_p": {
+        "name": "Typical P",
+        "tooltip": "Typical sampling strength. 1.0 is neutral."
+      },
+      "temperature": {
+        "name": "Temperature",
+        "tooltip": "Higher values are more random; lower values are more stable."
+      },
+      "repeat_penalty": {
+        "name": "Repeat Penalty",
+        "tooltip": "Penalize repeated tokens. Slightly above 1.0 reduces loops."
+      },
+      "frequency_penalty": {
+        "name": "Frequency Penalty",
+        "tooltip": "Discourage tokens that already appear often."
+      },
+      "present_penalty": {
+        "name": "Presence Penalty",
+        "tooltip": "Discourage any token that already appears in the result."
+      },
+      "mirostat_mode": {
+        "name": "Mirostat Mode",
+        "tooltip": "Mirostat sampling mode: 0 off, 1 or 2 enabled."
+      },
+      "mirostat_eta": {
+        "name": "Mirostat Eta",
+        "tooltip": "Mirostat learning rate."
+      },
+      "mirostat_tau": {
+        "name": "Mirostat Tau",
+        "tooltip": "Mirostat target entropy. Lower values are more focused."
+      },
+      "gemma4_reasoning_budget": {
+        "name": "Gemma4 Thinking Budget Tokens",
+        "tooltip": "Gemma4 only. -1 is unlimited, 0 skips thought, and positive values limit thought tokens."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Inference Parameters",
+        "tooltip": "Sampling and generation parameters."
+      }
+    }
+  },
+  "PonyParseJson": {
+    "display_name": "Parse JSON-Pony",
+    "description": "Read a value from JSON text by path and output common ComfyUI types.",
+    "inputs": {
+      "input": {
+        "name": "JSON Text",
+        "tooltip": "JSON text or a value that already contains a parsed object."
+      },
+      "key": {
+        "name": "Key Path",
+        "tooltip": "Optional dot path, for example data.items.0.name."
+      },
+      "default": {
+        "name": "Default Value",
+        "tooltip": "Value returned when the key is missing or invalid."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Any",
+        "tooltip": "Parsed value."
+      },
+      "1": {
+        "name": "String",
+        "tooltip": "Value converted to text."
+      },
+      "2": {
+        "name": "Integer",
+        "tooltip": "Value converted to integer."
+      },
+      "3": {
+        "name": "Float",
+        "tooltip": "Value converted to float."
+      },
+      "4": {
+        "name": "Boolean",
+        "tooltip": "Value converted to boolean."
+      }
+    }
+  },
+  "PonyJsonToBBox": {
+    "display_name": "JSON to Bounding Boxes-Pony",
+    "description": "Convert JSON bounding boxes into ComfyUI BBOX data and an annotated image.",
+    "inputs": {
+      "json": {
+        "name": "JSON Text",
+        "tooltip": "JSON containing bbox_2d coordinates."
+      },
+      "mode": {
+        "name": "Parse Mode",
+        "tooltip": "Choose the coordinate interpretation used by the source model.",
+        "options": {
+          "simple": "Simple Coordinates",
+          "Qwen3-VL": "Qwen3-VL",
+          "Qwen2.5-VL": "Qwen2.5-VL"
+        }
+      },
+      "label": {
+        "name": "Label Source",
+        "tooltip": "Keep only boxes with this label. Empty keeps all boxes."
+      },
+      "image": {
+        "name": "Image",
+        "tooltip": "Optional image used to scale or clamp coordinates."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Bounding Boxes",
+        "tooltip": "Parsed bounding boxes."
+      },
+      "1": {
+        "name": "Image List",
+        "tooltip": "Optional preview images with boxes drawn."
+      }
+    }
+  },
+  "PonyBBoxToSEGS": {
+    "display_name": "Bounding Boxes to SEGS-Pony",
+    "description": "Convert bounding boxes into ComfyUI SEGS.",
+    "inputs": {
+      "bboxes": {
+        "name": "Bounding Boxes",
+        "tooltip": "Bounding boxes from JSON to BBox or Select BBox."
+      },
+      "image": {
+        "name": "Image",
+        "tooltip": "Image used as the coordinate reference."
+      },
+      "dilation": {
+        "name": "Dilation",
+        "tooltip": "Expand each box by this many pixels."
+      },
+      "feather": {
+        "name": "Feather",
+        "tooltip": "Blur the region edge by this many pixels."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "SEGS",
+        "tooltip": "SEGS regions for inpainting."
+      }
+    }
+  },
+  "PonyBBoxToMask": {
+    "display_name": "Bounding Boxes to Mask-Pony",
+    "description": "Convert bounding boxes into a MASK with dilation and feather controls.",
+    "inputs": {
+      "bboxes": {
+        "name": "Bounding Boxes",
+        "tooltip": "Bounding boxes to convert into a mask."
+      },
+      "image": {
+        "name": "Image",
+        "tooltip": "Image that defines the output mask size."
+      },
+      "dilation": {
+        "name": "Dilation",
+        "tooltip": "Expand each box by this many pixels."
+      },
+      "feather": {
+        "name": "Feather",
+        "tooltip": "Blur the mask edge by this many pixels."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Mask",
+        "tooltip": "Generated mask."
+      }
+    }
+  },
+  "PonySelectBBox": {
+    "display_name": "Select Bounding Box-Pony",
+    "description": "Select one bounding box by image index and box index.",
+    "inputs": {
+      "bboxes": {
+        "name": "Bounding Boxes",
+        "tooltip": "A list of bounding boxes."
+      },
+      "image_index": {
+        "name": "Image Index",
+        "tooltip": "Zero-based image index."
+      },
+      "bbox_index": {
+        "name": "Box Index",
+        "tooltip": "Zero-based box index inside the selected image."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Bounding Box",
+        "tooltip": "Selected bounding box."
+      }
+    }
+  },
+  "PonyPromptEnhancerPreset": {
+    "display_name": "Prompt Enhancer Preset-Pony",
+    "description": "Read 19 ordered presets bundled inside this plugin.",
+    "inputs": {
+      "preset": {
+        "name": "Prompt Preset",
+        "tooltip": "Choose a built-in system prompt preset.",
+        "options": {
+          "01_图像编辑提示增强功能": "01. Image edit prompt enhancement",
+          "02_通用图像提示词改写专家": "02. General image prompt rewrite expert",
+          "03_提示词优化专家": "03. Prompt optimization expert",
+          "04_全能电影分镜师与摄影指导": "04. Film storyboard and cinematography",
+          "05_LTX-2 视频提示词专家": "05. LTX-2 video prompt expert",
+          "06_角色设定服装结构拆解": "06. Character outfit and structure breakdown",
+          "07_视频文生图提示扩写专家": "07. Video to image prompt expansion",
+          "08_图像提示词改写专家pro": "08. Image prompt rewrite expert Pro",
+          "09_高动态运镜反推设定": "09. Dynamic camera reverse",
+          "10_minimax视频反推设定": "10. MiniMax video reverse",
+          "11_角色深度设定卡编排专家": "11. Character deep profile",
+          "12_NSFW图像提示词生成": "12. NSFW image prompt generation",
+          "13_海报生图提示词生成器": "13. Poster image prompt generator",
+          "14_商业创意海报设计师": "14. Commercial creative poster designer",
+          "15_Logo创创意设计师": "15. Logo creative designer",
+          "16_通用助手": "16. General assistant",
+          "17_Sdxl标签提示词反推": "17. SDXL tag prompt reverse",
+          "18_H3-Image图像编辑提示增强": "18. H3-Image edit prompt enhancement",
+          "19_sensenova图像编辑提示增强": "19. SenseNova image edit prompt enhancement"
+        }
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "System Prompt",
+        "tooltip": "Text of the selected preset."
+      }
+    }
+  },
+  "PonyLlamaCppTextEncoder": {
+    "display_name": "Llama.cpp Text Encoder-Pony",
+    "description": "Encode text with a local Llama.cpp model and output CONDITIONING.",
+    "inputs": {
+      "llama_model": {
+        "name": "Llama Model",
+        "tooltip": "Connect the local Llama.cpp model."
+      },
+      "prompt": {
+        "name": "Prompt",
+        "tooltip": "Text to encode as conditioning."
+      },
+      "type": {
+        "name": "Encoding Type",
+        "tooltip": "Choose the hidden-state preset expected by the target generation model.",
+        "options": {
+          "Boogu-Image": "Boogu Image",
+          "JoyImage": "JoyImage",
+          "Lumina2": "Lumina2",
+          "Mage-Flow": "Mage-Flow",
+          "MiniMax-T2V": "MiniMax-T2V",
+          "Qwen-Image": "Qwen-Image",
+          "Z-Image": "Z-Image"
+        }
+      },
+      "force_offload": {
+        "name": "Unload After Run",
+        "tooltip": "Unload the local model after encoding."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Conditioning",
+        "tooltip": "Conditioning produced by the local model."
+      }
+    }
+  },
+  "PonyApiLlmLoader": {
+    "display_name": "☁️API LLM Loader-Pony",
+    "description": "Configure an OpenAI-compatible API and refresh available models.",
+    "inputs": {
+      "模型名称": {
+        "name": "Model Name",
+        "tooltip": "Model identifier used by the API."
+      },
+      "接口地址": {
+        "name": "Base URL",
+        "tooltip": "OpenAI-compatible base URL or full endpoint."
+      },
+      "接口密钥": {
+        "name": "API Key",
+        "tooltip": "API key. It is stored in this node when the workflow is saved."
+      },
+      "请求超时": {
+        "name": "Request Timeout",
+        "tooltip": "Maximum request time in seconds."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "API Model",
+        "tooltip": "API model configuration."
+      }
+    }
+  },
+  "PonyApiLlmChain": {
+    "display_name": "☁️API LLM Universal Chain-Pony",
+    "description": "Run text, multi-image, web-search, and grouped requests through an OpenAI-compatible API.",
+    "inputs": {
+      "模型": {
+        "name": "API Model",
+        "tooltip": "Connect the API LLM Loader output."
+      },
+      "系统提示词": {
+        "name": "System Prompt",
+        "tooltip": "Behavior and output instructions for the API model."
+      },
+      "用户提示词": {
+        "name": "User Prompt",
+        "tooltip": "The actual task or question."
+      },
+      "推理模式": {
+        "name": "Inference Mode",
+        "tooltip": "Merge all images into one request, or process each image group separately.",
+        "options": {
+          "多图合并": "Merge Images",
+          "逐组推理": "Process Each Group"
+        }
+      },
+      "最大生成长度": {
+        "name": "Maximum Output Tokens",
+        "tooltip": "Maximum output tokens."
+      },
+      "长度参数类型": {
+        "name": "Token-Limit Parameter",
+        "tooltip": "API field used to send the output length limit.",
+        "options": {
+          "max_tokens": "max_tokens (Legacy)",
+          "max_completion_tokens": "max_completion_tokens (New APIs)"
+        }
+      },
+      "发送温度参数": {
+        "name": "Send Temperature",
+        "tooltip": "Disable this for models that reject the temperature field."
+      },
+      "生成温度": {
+        "name": "Temperature",
+        "tooltip": "Higher values are more random."
+      },
+      "图片像素上限": {
+        "name": "Image Megapixel Limit",
+        "tooltip": "Maximum pixels per image before upload. 1 MP = 1,048,576 pixels."
+      },
+      "流式响应": {
+        "name": "Streaming Response",
+        "tooltip": "Read the response as a stream. Final text is still returned together."
+      },
+      "联网搜索": {
+        "name": "Web Search",
+        "tooltip": "Request provider-side web search when supported."
+      },
+      "搜索关键词": {
+        "name": "Search Query",
+        "tooltip": "Optional query used for web search."
+      },
+      "image_bundle": {
+        "name": "Image Bundle",
+        "tooltip": "Images sent to the API model."
+      },
+      "额外参数": {
+        "name": "Extra API Parameters",
+        "tooltip": "Optional JSON object merged into the API request."
+      },
+      "skill": {
+        "name": "Skill / System Prompt",
+        "tooltip": "A non-empty Skill overrides the system prompt."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Reply Text",
+        "tooltip": "Final API response text."
+      },
+      "1": {
+        "name": "Reply List",
+        "tooltip": "One response per image group."
+      },
+      "2": {
+        "name": "Request Log",
+        "tooltip": "Request and response report."
+      },
+      "3": {
+        "name": "Reasoning",
+        "tooltip": "Reasoning content when provided by the API."
+      }
+    }
+  },
+  "PonyApiImageEditor": {
+    "display_name": "☁️API Image Generation & Editing-Pony",
+    "description": "Generate or edit images through supported remote APIs and reference images.",
+    "inputs": {
+      "接口协议": {
+        "name": "API Protocol",
+        "tooltip": "Select the request/response format required by the image provider.",
+        "options": {
+          "OpenAI Images": "OpenAI Images",
+          "Gemini 原生": "Gemini Native",
+          "Nano Banana OpenAI兼容": "Nano Banana (OpenAI Compatible)",
+          "Chat Completions 图像": "Chat Completions Image",
+          "通用 JSON": "Generic JSON",
+          "通用 multipart": "Generic Multipart"
+        }
+      },
+      "接口地址": {
+        "name": "Base URL",
+        "tooltip": "Base URL or full endpoint for the image API."
+      },
+      "接口密钥": {
+        "name": "API Key",
+        "tooltip": "API key. It is saved inside the workflow."
+      },
+      "模型名称": {
+        "name": "Model Name",
+        "tooltip": "Image model identifier."
+      },
+      "提示词": {
+        "name": "Prompt",
+        "tooltip": "Describe the image to generate or the edit to perform."
+      },
+      "请求次数": {
+        "name": "Request Count",
+        "tooltip": "How many API requests to send."
+      },
+      "输出宽度": {
+        "name": "Output Width",
+        "tooltip": "Requested width. 0 lets the provider choose."
+      },
+      "输出高度": {
+        "name": "Output Height",
+        "tooltip": "Requested height. 0 lets the provider choose."
+      },
+      "图像比例": {
+        "name": "Aspect Ratio",
+        "tooltip": "Requested aspect ratio.",
+        "options": {
+          "自动": "Auto"
+        }
+      },
+      "分辨率档位": {
+        "name": "Resolution Level",
+        "tooltip": "Provider resolution preset.",
+        "options": {
+          "无": "None",
+          "1K": "1K",
+          "2K": "2K",
+          "4K": "4K"
+        }
+      },
+      "限制输出宽高比": {
+        "name": "Limit Output Aspect Ratio",
+        "tooltip": "Crop or validate the result against the requested ratio."
+      },
+      "参考图百万像素上限": {
+        "name": "Reference Megapixel Limit",
+        "tooltip": "Maximum pixels per reference image. 1 MP = 1,048,576 pixels; 0 disables the limit."
+      },
+      "生成质量": {
+        "name": "Quality",
+        "tooltip": "Provider quality setting when supported.",
+        "options": {
+          "auto": "Auto",
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High"
+        }
+      },
+      "分块传输": {
+        "name": "Chunked Transfer",
+        "tooltip": "Enable chunked HTTP transfer when uploading images."
+      },
+      "请求超时": {
+        "name": "Request Timeout",
+        "tooltip": "Maximum request time in seconds."
+      },
+      "绕过代理": {
+        "name": "Bypass Proxy",
+        "tooltip": "Connect directly without the configured system proxy."
+      },
+      "失败后继续": {
+        "name": "Continue After Failure",
+        "tooltip": "Continue returning successful images when one request fails."
+      },
+      "image_bundle": {
+        "name": "Image Bundle",
+        "tooltip": "Reference images used for image editing."
+      },
+      "自定义端点": {
+        "name": "Custom Endpoint",
+        "tooltip": "Optional endpoint path appended to the base URL."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Generated Image",
+        "tooltip": "Generated or edited image."
+      },
+      "1": {
+        "name": "Execution Report",
+        "tooltip": "Request and execution report."
+      }
+    }
+  },
+  "PonyMultiImageResize": {
+    "display_name": "Multi-Image Resize-Pony",
+    "description": "Configure image resizing. The companion handles images, masks, and bundle; this controller outputs padding mask, dimensions, report, and preview.",
+    "inputs": {
+      "resize_mode": {
+        "name": "Resize Mode",
+        "tooltip": "Choose how image sizes are calculated.",
+        "options": {
+          "统一百万像素限制 / Megapixel limit": "Megapixel Limit",
+          "所有图像强制缩放到百万像素 / Force megapixel size": "Force All Images",
+          "图1手动尺寸/边模式 / Image 1 manual size or edge": "Image 1 Manual Size",
+          "统一比例填充 / Pad to aspect ratio": "Pad to Aspect Ratio"
+        }
+      },
+      "megapixels": {
+        "name": "Megapixel Limit",
+        "tooltip": "Target pixel area uses binary megapixels: 1 MP = 1024 × 1024 = 1,048,576 pixels. A value of 1.0 allows 1,048,576 pixels."
+      },
+      "area_multiplier": {
+        "name": "Other-Image Area Multiplier",
+        "tooltip": "Area multiplier applied to images after the first one."
+      },
+      "color_preset": {
+        "name": "Fill Color",
+        "tooltip": "Padding color.",
+        "options": {
+          "黑色 / Black": "Black",
+          "白色 / White": "White",
+          "灰色 / Gray": "Gray",
+          "红色 / Red": "Red",
+          "绿色 / Green": "Green",
+          "蓝色 / Blue": "Blue",
+          "黄色 / Yellow": "Yellow",
+          "自定义 / Custom": "Custom"
+        }
+      },
+      "fill_color": {
+        "name": "Custom RGB Color",
+        "tooltip": "Custom RGB color, for example 20, 30, 40."
+      },
+      "ratio_preset": {
+        "name": "Aspect Ratio Preset",
+        "tooltip": "Choose the target aspect ratio.",
+        "options": {
+          "手动": "Manual",
+          "原图": "Original"
+        }
+      },
+      "aspect_ratio": {
+        "name": "Manual Aspect Ratio",
+        "tooltip": "Custom ratio such as 3:2."
+      },
+      "manual_width": {
+        "name": "Manual Width",
+        "tooltip": "Manual output width."
+      },
+      "manual_height": {
+        "name": "Manual Height",
+        "tooltip": "Manual output height."
+      },
+      "edge_length": {
+        "name": "Resize Edge To",
+        "tooltip": "Target length of the selected edge."
+      },
+      "crop_mode": {
+        "name": "Crop Mode",
+        "tooltip": "Stretch, crop, or pad when aspect ratios differ.",
+        "options": {
+          "拉伸 / Stretch": "Stretch",
+          "裁剪 / Crop": "Crop",
+          "填充 / Pad": "Pad"
+        }
+      },
+      "resize_method": {
+        "name": "Resize Method",
+        "tooltip": "Which edge is fitted, or use explicit width and height.",
+        "options": {
+          "按长边保持比例 / Fit long edge": "Fit Long Edge",
+          "按短边保持比例 / Fit short edge": "Fit Short Edge",
+          "自定义宽高 / Custom width and height": "Custom Width and Height"
+        }
+      },
+      "interpolation": {
+        "name": "Interpolation",
+        "tooltip": "Resampling filter. Lanczos keeps more detail.",
+        "options": {
+          "Lanczos": "Lanczos",
+          "双三次 / Bicubic": "Bicubic",
+          "双线性 / Bilinear": "Bilinear",
+          "邻近 / Nearest": "Nearest",
+          "区域 / Box": "Box"
+        }
+      },
+      "divisor": {
+        "name": "Divisor",
+        "tooltip": "Round final width and height to a multiple of this value."
+      },
+      "result_bundle": {
+        "name": "Result Bundle",
+        "tooltip": "Optional image bundle to resize."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Image 1 Padding Mask",
+        "tooltip": "Padding mask for image 1."
+      },
+      "1": {
+        "name": "Image 1 Width",
+        "tooltip": "Final width of image 1."
+      },
+      "2": {
+        "name": "Image 1 Height",
+        "tooltip": "Final height of image 1."
+      },
+      "3": {
+        "name": "Execution Report",
+        "tooltip": "Resize details and warnings."
+      },
+      "4": {
+        "name": "Combined Preview",
+        "tooltip": "Combined preview of resized images."
+      }
+    }
+  },
+  "PonyMultiImageResizeIO": {
+    "display_name": "Dynamic Image Input and Output-Pony",
+    "description": "Provide up to eight image and mask inputs with dynamic resized-image, mask, and bundle outputs.",
+    "inputs": {
+      "image_1": {
+        "name": "Image input 1",
+        "tooltip": "Image input 1."
+      },
+      "image_2": {
+        "name": "Image input 2",
+        "tooltip": "Image input 2."
+      },
+      "image_3": {
+        "name": "Image input 3",
+        "tooltip": "Image input 3."
+      },
+      "image_4": {
+        "name": "Image input 4",
+        "tooltip": "Image input 4."
+      },
+      "image_5": {
+        "name": "Image input 5",
+        "tooltip": "Image input 5."
+      },
+      "image_6": {
+        "name": "Image input 6",
+        "tooltip": "Image input 6."
+      },
+      "image_7": {
+        "name": "Image input 7",
+        "tooltip": "Image input 7."
+      },
+      "image_8": {
+        "name": "Image input 8",
+        "tooltip": "Image input 8."
+      },
+      "mask_1": {
+        "name": "Image 1 Mask",
+        "tooltip": "Optional mask for image 1."
+      },
+      "resize_config": {
+        "name": "Resize Parameters (auto)",
+        "tooltip": "Internal synchronized settings. No manual input is required."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Image 1",
+        "tooltip": "Image 1."
+      },
+      "1": {
+        "name": "Image 2",
+        "tooltip": "Image 2."
+      },
+      "2": {
+        "name": "Image 3",
+        "tooltip": "Image 3."
+      },
+      "3": {
+        "name": "Image 4",
+        "tooltip": "Image 4."
+      },
+      "4": {
+        "name": "Image 5",
+        "tooltip": "Image 5."
+      },
+      "5": {
+        "name": "Image 6",
+        "tooltip": "Image 6."
+      },
+      "6": {
+        "name": "Image 7",
+        "tooltip": "Image 7."
+      },
+      "7": {
+        "name": "Image 8",
+        "tooltip": "Image 8."
+      },
+      "8": {
+        "name": "Image 1 Mask",
+        "tooltip": "Mask for image 1."
+      },
+      "9": {
+        "name": "Image Bundle",
+        "tooltip": "All resized images bundled together."
+      }
+    }
+  },
+  "PonyImageInputBundle": {
+    "display_name": "Dynamic Image Input-Pony",
+    "description": "Collect up to ten dynamic images into one stable bundle for local Instruct, API LLM, and API image nodes.",
+    "inputs": {
+      "image_1": {
+        "name": "Image input 1",
+        "tooltip": "Image input 1."
+      },
+      "image_2": {
+        "name": "Image input 2",
+        "tooltip": "Image input 2."
+      },
+      "image_3": {
+        "name": "Image input 3",
+        "tooltip": "Image input 3."
+      },
+      "image_4": {
+        "name": "Image input 4",
+        "tooltip": "Image input 4."
+      },
+      "image_5": {
+        "name": "Image input 5",
+        "tooltip": "Image input 5."
+      },
+      "image_6": {
+        "name": "Image input 6",
+        "tooltip": "Image input 6."
+      },
+      "image_7": {
+        "name": "Image input 7",
+        "tooltip": "Image input 7."
+      },
+      "image_8": {
+        "name": "Image input 8",
+        "tooltip": "Image input 8."
+      },
+      "image_9": {
+        "name": "Image input 9",
+        "tooltip": "Image input 9."
+      },
+      "image_10": {
+        "name": "Image input 10",
+        "tooltip": "Image input 10."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Image Bundle",
+        "tooltip": "All connected images bundled together."
+      }
+    }
+  }
+}

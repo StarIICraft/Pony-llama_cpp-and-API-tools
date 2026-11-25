@@ -1,0 +1,978 @@
+{
+  "PonyLlamaCppModelLoader": {
+    "display_name": "Llama.cpp 模型加载器-小马",
+    "description": "加载本地 GGUF 主模型、多模态投影和对话处理器。",
+    "inputs": {
+      "model": {
+        "name": "模型",
+        "tooltip": "选择 GGUF 主模型。"
+      },
+      "mmproj": {
+        "name": "多模态投影",
+        "tooltip": "选择与主模型配套的视觉或音频投影；纯文本模型可选“无”。",
+        "options": {
+          "None": "无"
+        }
+      },
+      "chat_handler": {
+        "name": "对话处理器",
+        "tooltip": "选择与模型匹配的对话处理器。Gemma4-Thinking 仅建议官方支持思考的型号使用。",
+        "options": {
+          "None": "无",
+          "LLaVA-1.5": "LLaVA-1.5",
+          "LLaVA-1.6": "LLaVA-1.6",
+          "Moondream2": "Moondream2",
+          "nanoLLaVA": "nanoLLaVA",
+          "llama3-Vision-Alpha": "llama3-Vision-Alpha",
+          "MiniCPM-v2.6": "MiniCPM-v2.6",
+          "DeepSeek-OCR": "DeepSeek-OCR",
+          "Gemma3": "Gemma3",
+          "Gemma4": "Gemma4",
+          "Gemma4-Thinking": "Gemma4（思考）",
+          "Qwen2.5-VL": "Qwen2.5-VL",
+          "MinerU2.5-Pro": "MinerU2.5-Pro",
+          "Qwen3-VL": "Qwen3-VL",
+          "Qwen3-VL-Thinking": "Qwen3-VL（思考）",
+          "Qwen3.5": "Qwen3.5",
+          "Qwen3.5-Thinking": "Qwen3.5（思考）",
+          "Qwen3.6": "Qwen3.6",
+          "Qwen3.6-Thinking": "Qwen3.6（思考）",
+          "Qwen3.8": "Qwen3.8",
+          "Qwen3.8-Thinking": "Qwen3.8（思考）",
+          "GLM-4.6V": "GLM-4.6V",
+          "GLM-4.6V-Thinking": "GLM-4.6V（思考）",
+          "GLM-4.1V-Thinking": "GLM-4.1V（思考）",
+          "LFM2-VL": "LFM2-VL",
+          "LFM2.5-VL": "LFM2.5-VL",
+          "Granite-Docling": "Granite-Docling",
+          "MiniCPM-v4.5": "MiniCPM-v4.5",
+          "MiniCPM-v4.5-Thinking": "MiniCPM-v4.5（思考）",
+          "MiniCPM-v4.6": "MiniCPM-v4.6",
+          "MiniCPM-v4.6-Thinking": "MiniCPM-v4.6（思考）",
+          "PaddleOCR-VL-1.5": "PaddleOCR-VL-1.5",
+          "Qwen3-ASR": "Qwen3-ASR",
+          "Step3-VL": "Step3-VL"
+        }
+      },
+      "n_ctx": {
+        "name": "上下文长度",
+        "tooltip": "上下文窗口。值越大可容纳越多文字和图片，但占用更多显存。"
+      },
+      "vram_limit": {
+        "name": "显存上限",
+        "tooltip": "GPU 显存上限（GB）。-1 表示尽量把更多层放到 GPU。"
+      },
+      "image_min_tokens": {
+        "name": "图像最小 Token 数",
+        "tooltip": "每张图片最少使用的视觉 Token。0 表示自动选择。"
+      },
+      "image_max_tokens": {
+        "name": "图像最大 Token 数",
+        "tooltip": "每张图片最多使用的视觉 Token。0 表示自动；值越大细节越多，但速度更慢。"
+      },
+      "load_mtp": {
+        "name": "加载 MTP",
+        "tooltip": "启用模型内置 MTP 推测解码。所选 GGUF 必须包含 MTP 层。"
+      },
+      "kv_cache_mode": {
+        "name": "KV 缓存组合",
+        "tooltip": "同时设置 K/V 缓存精度。F16 质量最高，Q8/Q4 更省显存。",
+        "options": {
+          "K F16 / V F16": "K F16 / V F16（最高质量）",
+          "K Q8_0 / V Q8_0": "K Q8 / V Q8（均衡）",
+          "K Q8_0 / V Q4_0": "K Q8 / V Q4（更省显存）",
+          "K Q4_0 / V Q4_0": "K Q4 / V Q4（最省显存）"
+        }
+      },
+      "cpu_moe": {
+        "name": "MoE 专家上 CPU",
+        "tooltip": "仅 Qwen3.6 MoE 使用。把全部专家权重放到 CPU 以节省显存，通常会变慢。"
+      },
+      "n_cpu_moe": {
+        "name": "前 N 层专家上 CPU",
+        "tooltip": "仅 Qwen3.6 MoE 使用。把前 N 层专家放到 CPU；开启全部专家时忽略。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Llama 模型",
+        "tooltip": "传给指令节点的模型配置。"
+      }
+    }
+  },
+  "PonyLlamaCppInstruct": {
+    "display_name": "Llama.cpp 图像/音频/文本指令-小马",
+    "description": "使用本地 llama.cpp 模型执行文本、多图、视频帧以及受支持的音频推理。",
+    "inputs": {
+      "llama_model": {
+        "name": "Llama 模型",
+        "tooltip": "连接 Llama.cpp 模型加载器的模型输出。"
+      },
+      "custom_prompt": {
+        "name": "用户提示词",
+        "tooltip": "填写当前图片、多图、视频帧或纯文本任务。"
+      },
+      "system_prompt": {
+        "name": "系统提示词",
+        "tooltip": "可选系统提示。留空时使用内置通用助手提示词。"
+      },
+      "inference_mode": {
+        "name": "推理模式",
+        "tooltip": "选择已连接图片的处理方式。",
+        "options": {
+          "one by one": "逐图处理",
+          "images": "多图合并",
+          "video": "视频抽帧",
+          "text": "纯文本"
+        }
+      },
+      "max_frames": {
+        "name": "最大帧数",
+        "tooltip": "仅视频模式：每个 IMAGE 批次最多均匀抽取的帧数。"
+      },
+      "max_megapixels": {
+        "name": "最大图像像素（百万）",
+        "tooltip": "每张图片送入模型前的像素上限。0.5 MP 表示 524,288 像素。"
+      },
+      "seed": {
+        "name": "随机种子",
+        "tooltip": "固定随机种子可让重复运行结果更稳定。"
+      },
+      "unload_mode": {
+        "name": "模型卸载方式",
+        "tooltip": "选择 GGUF 模型的卸载时机。保持加载可减少下次加载时间。",
+        "options": {
+          "自动": "自动",
+          "保持加载": "保持加载",
+          "运行后自动卸载": "运行后卸载",
+          "运行前后自动卸载": "运行前后卸载"
+        }
+      },
+      "parameters": {
+        "name": "推理参数",
+        "tooltip": "连接 Llama.cpp 推理参数节点，控制采样和生成长度。"
+      },
+      "image_bundle": {
+        "name": "图像包",
+        "tooltip": "连接动态图像输入伴随节点的“图像包”输出。"
+      },
+      "queue_handler": {
+        "name": "队列控制",
+        "tooltip": "仅控制执行顺序，不传入图像或视频内容。"
+      },
+      "skill": {
+        "name": "Skill / 系统提示",
+        "tooltip": "非空的 Skill 或系统提示会覆盖上方系统提示词。"
+      },
+      "audio": {
+        "name": "音频",
+        "tooltip": "可选 ComfyUI AUDIO 输入。支持 Gemma4、Gemma4-Thinking 和 Qwen3-ASR；其他处理器会明确报错。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "输出",
+        "tooltip": "合并后的最终文本。"
+      },
+      "1": {
+        "name": "输出列表",
+        "tooltip": "适用时，每个图像组对应一条结果。"
+      }
+    }
+  },
+  "PonyLlamaCppParameters": {
+    "display_name": "Llama.cpp 推理参数-小马",
+    "description": "配置采样、温度、惩罚和 Mirostat 等推理参数。",
+    "inputs": {
+      "max_tokens": {
+        "name": "最大 Token 数",
+        "tooltip": "最大总生成 Token 数，包含思考内容和最终回答。"
+      },
+      "top_k": {
+        "name": "Top K",
+        "tooltip": "只从概率最高的 K 个 Token 中采样。0 表示不限制。"
+      },
+      "top_p": {
+        "name": "Top P",
+        "tooltip": "核采样概率。值越低，输出越保守。"
+      },
+      "min_p": {
+        "name": "Min P",
+        "tooltip": "丢弃相对概率低于此值的 Token。"
+      },
+      "typical_p": {
+        "name": "Typical P",
+        "tooltip": "Typical 采样强度，1.0 表示不调整。"
+      },
+      "temperature": {
+        "name": "温度",
+        "tooltip": "值越高越有变化，值越低越稳定。"
+      },
+      "repeat_penalty": {
+        "name": "重复惩罚",
+        "tooltip": "惩罚重复 Token。略高于 1.0 可减少循环输出。"
+      },
+      "frequency_penalty": {
+        "name": "频率惩罚",
+        "tooltip": "降低高频 Token 再次出现的概率。"
+      },
+      "present_penalty": {
+        "name": "出现惩罚",
+        "tooltip": "降低已经出现过的 Token 再次出现的概率。"
+      },
+      "mirostat_mode": {
+        "name": "Mirostat 模式",
+        "tooltip": "Mirostat 采样模式：0 关闭，1 或 2 开启。"
+      },
+      "mirostat_eta": {
+        "name": "Mirostat Eta",
+        "tooltip": "Mirostat 学习率。"
+      },
+      "mirostat_tau": {
+        "name": "Mirostat Tau",
+        "tooltip": "Mirostat 目标熵。值越低输出越集中。"
+      },
+      "gemma4_reasoning_budget": {
+        "name": "Gemma4 思考预算 Token",
+        "tooltip": "仅 Gemma4 生效。-1 不限制，0 跳过思考，正数限制思考 Token 数。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "推理参数",
+        "tooltip": "采样与生成参数。"
+      }
+    }
+  },
+  "PonyParseJson": {
+    "display_name": "解析 JSON-小马",
+    "description": "从 JSON 文本中按路径读取值，并输出为多种常用类型。",
+    "inputs": {
+      "input": {
+        "name": "JSON 文本",
+        "tooltip": "JSON 文本，或已经解析好的对象。"
+      },
+      "key": {
+        "name": "键路径",
+        "tooltip": "可选键路径，例如 data.items.0.name。"
+      },
+      "default": {
+        "name": "默认值",
+        "tooltip": "键不存在或解析失败时返回的默认值。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "任意值",
+        "tooltip": "解析后的值。"
+      },
+      "1": {
+        "name": "字符串",
+        "tooltip": "转换为文本的值。"
+      },
+      "2": {
+        "name": "整数",
+        "tooltip": "转换为整数的值。"
+      },
+      "3": {
+        "name": "浮点数",
+        "tooltip": "转换为浮点数的值。"
+      },
+      "4": {
+        "name": "布尔值",
+        "tooltip": "转换为布尔值的值。"
+      }
+    }
+  },
+  "PonyJsonToBBox": {
+    "display_name": "JSON 转边界框-小马",
+    "description": "将模型返回的 JSON 边界框转换为 ComfyUI BBOX 与标注图像。",
+    "inputs": {
+      "json": {
+        "name": "JSON 文本",
+        "tooltip": "包含 bbox_2d 坐标的 JSON。"
+      },
+      "mode": {
+        "name": "解析模式",
+        "tooltip": "选择 JSON 坐标所对应的模型格式。",
+        "options": {
+          "simple": "简单坐标",
+          "Qwen3-VL": "Qwen3-VL",
+          "Qwen2.5-VL": "Qwen2.5-VL"
+        }
+      },
+      "label": {
+        "name": "标签来源",
+        "tooltip": "只保留指定标签的边界框；留空保留全部。"
+      },
+      "image": {
+        "name": "图像",
+        "tooltip": "可选原图，用于缩放或限制坐标范围。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "边界框",
+        "tooltip": "解析出的边界框。"
+      },
+      "1": {
+        "name": "图像列表",
+        "tooltip": "可选：绘制边界框后的预览图。"
+      }
+    }
+  },
+  "PonyBBoxToSEGS": {
+    "display_name": "边界框转 SEGS-小马",
+    "description": "把 BBOX 转换为 ComfyUI SEGS。",
+    "inputs": {
+      "bboxes": {
+        "name": "边界框",
+        "tooltip": "连接 JSON 转边界框或选择边界框的输出。"
+      },
+      "image": {
+        "name": "图像",
+        "tooltip": "作为坐标参考的原图。"
+      },
+      "dilation": {
+        "name": "扩张",
+        "tooltip": "将每个边界框向外扩张的像素数。"
+      },
+      "feather": {
+        "name": "羽化",
+        "tooltip": "区域边缘羽化的像素数。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "SEGS",
+        "tooltip": "用于重绘的 SEGS 区域。"
+      }
+    }
+  },
+  "PonyBBoxToMask": {
+    "display_name": "边界框转遮罩-小马",
+    "description": "把 BBOX 转换为 MASK，可设置扩张和羽化。",
+    "inputs": {
+      "bboxes": {
+        "name": "边界框",
+        "tooltip": "需要转换为遮罩的边界框。"
+      },
+      "image": {
+        "name": "图像",
+        "tooltip": "用于确定遮罩尺寸的原图。"
+      },
+      "dilation": {
+        "name": "扩张",
+        "tooltip": "将每个边界框向外扩张的像素数。"
+      },
+      "feather": {
+        "name": "羽化",
+        "tooltip": "遮罩边缘羽化的像素数。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "遮罩",
+        "tooltip": "生成的遮罩。"
+      }
+    }
+  },
+  "PonySelectBBox": {
+    "display_name": "选择边界框-小马",
+    "description": "按图像索引和边界框索引选择一个 BBOX。",
+    "inputs": {
+      "bboxes": {
+        "name": "边界框",
+        "tooltip": "边界框列表。"
+      },
+      "image_index": {
+        "name": "图像索引",
+        "tooltip": "图像索引，从 0 开始。"
+      },
+      "bbox_index": {
+        "name": "边界框索引",
+        "tooltip": "所选图像中边界框的索引，从 0 开始。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "边界框",
+        "tooltip": "选中的边界框。"
+      }
+    }
+  },
+  "PonyPromptEnhancerPreset": {
+    "display_name": "提示词增强预设-小马",
+    "description": "从本插件内置目录读取 19 个按序排列的提示词/系统预设。",
+    "inputs": {
+      "preset": {
+        "name": "提示词预设",
+        "tooltip": "选择一个内置系统提示词预设。",
+        "options": {
+          "01_图像编辑提示增强功能": "01. 图像编辑提示增强",
+          "02_通用图像提示词改写专家": "02. 通用图像提示词改写专家",
+          "03_提示词优化专家": "03. 提示词优化专家",
+          "04_全能电影分镜师与摄影指导": "04. 电影分镜与摄影指导",
+          "05_LTX-2 视频提示词专家": "05. LTX-2 视频提示词专家",
+          "06_角色设定服装结构拆解": "06. 角色服装与结构拆解",
+          "07_视频文生图提示扩写专家": "07. 视频转图像提示词扩写",
+          "08_图像提示词改写专家pro": "08. 图像提示词改写专家 Pro",
+          "09_高动态运镜反推设定": "09. 动态运镜反推",
+          "10_minimax视频反推设定": "10. MiniMax 视频反推",
+          "11_角色深度设定卡编排专家": "11. 角色深度设定卡",
+          "12_NSFW图像提示词生成": "12. NSFW 图像提示词生成",
+          "13_海报生图提示词生成器": "13. 海报提示词生成",
+          "14_商业创意海报设计师": "14. 商业创意海报设计",
+          "15_Logo创创意设计师": "15. Logo 创意设计",
+          "16_通用助手": "16. 通用助手",
+          "17_Sdxl标签提示词反推": "17. SDXL 标签提示词反推",
+          "18_H3-Image图像编辑提示增强": "18. H3-Image 图像编辑增强",
+          "19_sensenova图像编辑提示增强": "19. SenseNova 图像编辑增强"
+        }
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "系统提示词",
+        "tooltip": "所选预设的提示词文本。"
+      }
+    }
+  },
+  "PonyLlamaCppTextEncoder": {
+    "display_name": "Llama.cpp 文本编码器-小马",
+    "description": "使用本地 Llama.cpp 模型编码文本并输出 CONDITIONING。",
+    "inputs": {
+      "llama_model": {
+        "name": "Llama 模型",
+        "tooltip": "连接本地 Llama.cpp 模型。"
+      },
+      "prompt": {
+        "name": "提示词",
+        "tooltip": "需要编码为 CONDITIONING 的文本。"
+      },
+      "type": {
+        "name": "编码类型",
+        "tooltip": "选择目标生成模型所需的条件编码预设。",
+        "options": {
+          "Boogu-Image": "Boogu 图像",
+          "JoyImage": "JoyImage",
+          "Lumina2": "Lumina2",
+          "Mage-Flow": "Mage-Flow",
+          "MiniMax-T2V": "MiniMax-T2V",
+          "Qwen-Image": "Qwen-Image",
+          "Z-Image": "Z-Image"
+        }
+      },
+      "force_offload": {
+        "name": "运行后卸载",
+        "tooltip": "编码完成后卸载本地模型。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "条件编码",
+        "tooltip": "本地模型生成的条件编码。"
+      }
+    }
+  },
+  "PonyApiLlmLoader": {
+    "display_name": "☁️API LLM 加载器-小马",
+    "description": "配置 OpenAI 兼容 API，并可从服务端刷新模型列表。",
+    "inputs": {
+      "模型名称": {
+        "name": "模型名称",
+        "tooltip": "API 使用的模型名称。"
+      },
+      "接口地址": {
+        "name": "接口地址",
+        "tooltip": "OpenAI 兼容接口地址或完整端点。"
+      },
+      "接口密钥": {
+        "name": "接口密钥",
+        "tooltip": "接口密钥。保存工作流时会记录在节点中。"
+      },
+      "请求超时": {
+        "name": "请求超时",
+        "tooltip": "请求超时时间，单位为秒。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "API 模型",
+        "tooltip": "API 模型配置。"
+      }
+    }
+  },
+  "PonyApiLlmChain": {
+    "display_name": "☁️API LLM通用链路-小马",
+    "description": "通过 OpenAI 兼容 API 执行文本、多图、联网搜索和逐组推理。",
+    "inputs": {
+      "模型": {
+        "name": "API 模型",
+        "tooltip": "连接 API LLM 加载器的模型输出。"
+      },
+      "系统提示词": {
+        "name": "系统提示词",
+        "tooltip": "告诉 API 模型应如何回答的系统指令。"
+      },
+      "用户提示词": {
+        "name": "用户提示词",
+        "tooltip": "本次实际任务或问题。"
+      },
+      "推理模式": {
+        "name": "推理模式",
+        "tooltip": "把所有图片合并为一次请求，或逐个图像组处理。",
+        "options": {
+          "多图合并": "多图合并",
+          "逐组推理": "逐组推理"
+        }
+      },
+      "最大生成长度": {
+        "name": "最大生成长度",
+        "tooltip": "最大输出 Token 数。"
+      },
+      "长度参数类型": {
+        "name": "长度参数类型",
+        "tooltip": "用于传递输出长度限制的 API 字段。",
+        "options": {
+          "max_tokens": "max_tokens（兼容模式）",
+          "max_completion_tokens": "max_completion_tokens（新接口）"
+        }
+      },
+      "发送温度参数": {
+        "name": "发送温度参数",
+        "tooltip": "如果模型不接受 temperature 字段，可关闭。"
+      },
+      "生成温度": {
+        "name": "生成温度",
+        "tooltip": "值越高，输出越随机。"
+      },
+      "图片像素上限": {
+        "name": "图片像素上限",
+        "tooltip": "上传前每张图片的像素上限。1 MP = 1,048,576 像素。"
+      },
+      "流式响应": {
+        "name": "流式响应",
+        "tooltip": "以流式方式读取响应，最终仍汇总为完整文本。"
+      },
+      "联网搜索": {
+        "name": "联网搜索",
+        "tooltip": "在服务商支持时请求联网搜索。"
+      },
+      "搜索关键词": {
+        "name": "搜索关键词",
+        "tooltip": "可选的联网搜索关键词。"
+      },
+      "image_bundle": {
+        "name": "图像包",
+        "tooltip": "发送给 API 模型的图像包。"
+      },
+      "额外参数": {
+        "name": "额外参数",
+        "tooltip": "可选的 JSON 参数，会合并到 API 请求中。"
+      },
+      "skill": {
+        "name": "Skill / 系统提示",
+        "tooltip": "非空 Skill 会覆盖系统提示词。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "回复文本",
+        "tooltip": "API 最终回复文本。"
+      },
+      "1": {
+        "name": "回复列表",
+        "tooltip": "每个图像组对应的回复列表。"
+      },
+      "2": {
+        "name": "请求记录",
+        "tooltip": "请求与响应记录。"
+      },
+      "3": {
+        "name": "推理内容",
+        "tooltip": "API 返回的推理内容。"
+      }
+    }
+  },
+  "PonyApiImageEditor": {
+    "display_name": "☁️API 图像生成与编辑-小马",
+    "description": "通过兼容 API 执行图像生成、参考图编辑和多图参考生成。",
+    "inputs": {
+      "接口协议": {
+        "name": "接口协议",
+        "tooltip": "选择图像服务商要求的请求与响应格式。",
+        "options": {
+          "OpenAI Images": "OpenAI Images",
+          "Gemini 原生": "Gemini 原生",
+          "Nano Banana OpenAI兼容": "Nano Banana（OpenAI 兼容）",
+          "Chat Completions 图像": "Chat Completions 图像",
+          "通用 JSON": "通用 JSON",
+          "通用 multipart": "通用 Multipart"
+        }
+      },
+      "接口地址": {
+        "name": "接口地址",
+        "tooltip": "图像 API 的基础地址或完整端点。"
+      },
+      "接口密钥": {
+        "name": "接口密钥",
+        "tooltip": "接口密钥。会随工作流保存。"
+      },
+      "模型名称": {
+        "name": "模型名称",
+        "tooltip": "图像模型名称。"
+      },
+      "提示词": {
+        "name": "提示词",
+        "tooltip": "填写生成要求或编辑指令。"
+      },
+      "请求次数": {
+        "name": "请求次数",
+        "tooltip": "发送 API 请求的次数。"
+      },
+      "输出宽度": {
+        "name": "输出宽度",
+        "tooltip": "请求的输出宽度，0 表示由服务商决定。"
+      },
+      "输出高度": {
+        "name": "输出高度",
+        "tooltip": "请求的输出高度，0 表示由服务商决定。"
+      },
+      "图像比例": {
+        "name": "图像比例",
+        "tooltip": "请求的图像宽高比。",
+        "options": {
+          "自动": "自动"
+        }
+      },
+      "分辨率档位": {
+        "name": "分辨率档位",
+        "tooltip": "服务商的图像分辨率档位。",
+        "options": {
+          "无": "无",
+          "1K": "1K",
+          "2K": "2K",
+          "4K": "4K"
+        }
+      },
+      "限制输出宽高比": {
+        "name": "限制输出宽高比",
+        "tooltip": "按照请求比例裁剪或校验结果。"
+      },
+      "参考图百万像素上限": {
+        "name": "参考图百万像素上限",
+        "tooltip": "每张参考图的像素上限。1 MP = 1,048,576 像素；0 表示不限制。"
+      },
+      "生成质量": {
+        "name": "生成质量",
+        "tooltip": "服务商支持时使用的生成质量。",
+        "options": {
+          "auto": "自动",
+          "low": "低",
+          "medium": "中",
+          "high": "高"
+        }
+      },
+      "分块传输": {
+        "name": "分块传输",
+        "tooltip": "上传图片时启用分块 HTTP 传输。"
+      },
+      "请求超时": {
+        "name": "请求超时",
+        "tooltip": "请求超时时间，单位为秒。"
+      },
+      "绕过代理": {
+        "name": "绕过代理",
+        "tooltip": "不经过系统代理，直接连接接口。"
+      },
+      "失败后继续": {
+        "name": "失败后继续",
+        "tooltip": "单次请求失败时继续返回其他成功结果。"
+      },
+      "image_bundle": {
+        "name": "图像包",
+        "tooltip": "图像编辑使用的参考图包。"
+      },
+      "自定义端点": {
+        "name": "自定义端点",
+        "tooltip": "可选的自定义端点路径。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "生成图像",
+        "tooltip": "生成或编辑后的图像。"
+      },
+      "1": {
+        "name": "执行报告",
+        "tooltip": "请求与执行报告。"
+      }
+    }
+  },
+  "PonyMultiImageResize": {
+    "display_name": "多图统一缩放-小马",
+    "description": "配置缩放参数。伴随节点处理图像、遮罩和图像包；主节点输出拓展遮罩、尺寸、报告和预览。",
+    "inputs": {
+      "resize_mode": {
+        "name": "缩放模式",
+        "tooltip": "选择图片尺寸的计算方式。",
+        "options": {
+          "统一百万像素限制 / Megapixel limit": "统一百万像素限制",
+          "所有图像强制缩放到百万像素 / Force megapixel size": "所有图像强制缩放",
+          "图1手动尺寸/边模式 / Image 1 manual size or edge": "图 1 手动尺寸",
+          "统一比例填充 / Pad to aspect ratio": "统一比例补边"
+        }
+      },
+      "megapixels": {
+        "name": "百万像素上限",
+        "tooltip": "目标像素面积采用二进制计算：1 MP = 1024 × 1024 = 1,048,576 像素。设置 1.0 即以 1,048,576 像素作为目标面积。"
+      },
+      "area_multiplier": {
+        "name": "其余图像面积乘数",
+        "tooltip": "第 2 张起按图 1 面积乘以该倍率。"
+      },
+      "color_preset": {
+        "name": "填充颜色",
+        "tooltip": "补边使用的颜色。",
+        "options": {
+          "黑色 / Black": "黑色",
+          "白色 / White": "白色",
+          "灰色 / Gray": "灰色",
+          "红色 / Red": "红色",
+          "绿色 / Green": "绿色",
+          "蓝色 / Blue": "蓝色",
+          "黄色 / Yellow": "黄色",
+          "自定义 / Custom": "自定义颜色"
+        }
+      },
+      "fill_color": {
+        "name": "自定义 RGB 颜色",
+        "tooltip": "自定义 RGB 颜色，例如 20,30,40。"
+      },
+      "ratio_preset": {
+        "name": "比例预设",
+        "tooltip": "选择目标宽高比。",
+        "options": {
+          "手动": "手动",
+          "原图": "原图"
+        }
+      },
+      "aspect_ratio": {
+        "name": "手动比例",
+        "tooltip": "自定义比例，例如 3:2。"
+      },
+      "manual_width": {
+        "name": "手动宽度",
+        "tooltip": "手动输出宽度。"
+      },
+      "manual_height": {
+        "name": "手动高度",
+        "tooltip": "手动输出高度。"
+      },
+      "edge_length": {
+        "name": "将边缩放到",
+        "tooltip": "所选边的目标长度。"
+      },
+      "crop_mode": {
+        "name": "裁剪模式",
+        "tooltip": "比例不一致时选择拉伸、裁剪或补边。",
+        "options": {
+          "拉伸 / Stretch": "拉伸",
+          "裁剪 / Crop": "裁剪",
+          "填充 / Pad": "补边"
+        }
+      },
+      "resize_method": {
+        "name": "缩放方式",
+        "tooltip": "选择按长边、短边适配，或使用自定义宽高。",
+        "options": {
+          "按长边保持比例 / Fit long edge": "按长边适配",
+          "按短边保持比例 / Fit short edge": "按短边适配",
+          "自定义宽高 / Custom width and height": "自定义宽高"
+        }
+      },
+      "interpolation": {
+        "name": "缩放插值",
+        "tooltip": "缩放插值算法。Lanczos 通常保留更多细节。",
+        "options": {
+          "Lanczos": "Lanczos",
+          "双三次 / Bicubic": "双三次",
+          "双线性 / Bilinear": "双线性",
+          "邻近 / Nearest": "邻近",
+          "区域 / Box": "区域"
+        }
+      },
+      "divisor": {
+        "name": "整除数",
+        "tooltip": "最终宽高会对齐到该整除数。"
+      },
+      "result_bundle": {
+        "name": "结果包",
+        "tooltip": "可选：需要统一缩放的图像包。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "图 1 拓展遮罩",
+        "tooltip": "图 1 的补边遮罩。"
+      },
+      "1": {
+        "name": "图 1 宽度",
+        "tooltip": "图 1 的最终宽度。"
+      },
+      "2": {
+        "name": "图 1 高度",
+        "tooltip": "图 1 的最终高度。"
+      },
+      "3": {
+        "name": "执行报告",
+        "tooltip": "缩放详情与警告。"
+      },
+      "4": {
+        "name": "多图预览",
+        "tooltip": "缩放后图像的总览预览。"
+      }
+    }
+  },
+  "PonyMultiImageResizeIO": {
+    "display_name": "动态图像输入输出-小马",
+    "description": "承载最多 8 路图像、遮罩输入，并动态输出缩放图像、遮罩和图像包。",
+    "inputs": {
+      "image_1": {
+        "name": "图像输入 1",
+        "tooltip": "图像输入 1。"
+      },
+      "image_2": {
+        "name": "图像输入 2",
+        "tooltip": "图像输入 2。"
+      },
+      "image_3": {
+        "name": "图像输入 3",
+        "tooltip": "图像输入 3。"
+      },
+      "image_4": {
+        "name": "图像输入 4",
+        "tooltip": "图像输入 4。"
+      },
+      "image_5": {
+        "name": "图像输入 5",
+        "tooltip": "图像输入 5。"
+      },
+      "image_6": {
+        "name": "图像输入 6",
+        "tooltip": "图像输入 6。"
+      },
+      "image_7": {
+        "name": "图像输入 7",
+        "tooltip": "图像输入 7。"
+      },
+      "image_8": {
+        "name": "图像输入 8",
+        "tooltip": "图像输入 8。"
+      },
+      "mask_1": {
+        "name": "图 1 遮罩",
+        "tooltip": "图 1 的可选遮罩。"
+      },
+      "resize_config": {
+        "name": "缩放参数（自动同步）",
+        "tooltip": "内部自动同步参数，无需手动连接。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "图 1",
+        "tooltip": "图像 1。"
+      },
+      "1": {
+        "name": "图 2",
+        "tooltip": "图像 2。"
+      },
+      "2": {
+        "name": "图 3",
+        "tooltip": "图像 3。"
+      },
+      "3": {
+        "name": "图 4",
+        "tooltip": "图像 4。"
+      },
+      "4": {
+        "name": "图 5",
+        "tooltip": "图像 5。"
+      },
+      "5": {
+        "name": "图 6",
+        "tooltip": "图像 6。"
+      },
+      "6": {
+        "name": "图 7",
+        "tooltip": "图像 7。"
+      },
+      "7": {
+        "name": "图 8",
+        "tooltip": "图像 8。"
+      },
+      "8": {
+        "name": "图 1 遮罩",
+        "tooltip": "图 1 的遮罩。"
+      },
+      "9": {
+        "name": "图像包",
+        "tooltip": "打包后的全部缩放图像。"
+      }
+    }
+  },
+  "PonyImageInputBundle": {
+    "display_name": "动态图像输入-小马",
+    "description": "把最多 10 路动态图像集中到一个稳定输出，供本地指令、API LLM 和 API 图像节点使用。",
+    "inputs": {
+      "image_1": {
+        "name": "图像输入 1",
+        "tooltip": "图像输入 1。"
+      },
+      "image_2": {
+        "name": "图像输入 2",
+        "tooltip": "图像输入 2。"
+      },
+      "image_3": {
+        "name": "图像输入 3",
+        "tooltip": "图像输入 3。"
+      },
+      "image_4": {
+        "name": "图像输入 4",
+        "tooltip": "图像输入 4。"
+      },
+      "image_5": {
+        "name": "图像输入 5",
+        "tooltip": "图像输入 5。"
+      },
+      "image_6": {
+        "name": "图像输入 6",
+        "tooltip": "图像输入 6。"
+      },
+      "image_7": {
+        "name": "图像输入 7",
+        "tooltip": "图像输入 7。"
+      },
+      "image_8": {
+        "name": "图像输入 8",
+        "tooltip": "图像输入 8。"
+      },
+      "image_9": {
+        "name": "图像输入 9",
+        "tooltip": "图像输入 9。"
+      },
+      "image_10": {
+        "name": "图像输入 10",
+        "tooltip": "图像输入 10。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "图像包",
+        "tooltip": "打包后的全部图像。"
+      }
+    }
+  }
+}

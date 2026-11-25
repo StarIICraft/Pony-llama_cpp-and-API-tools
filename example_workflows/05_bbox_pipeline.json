@@ -1,0 +1,308 @@
+{
+  "id": "pony-bbox-pipeline",
+  "revision": 0,
+  "last_node_id": 4,
+  "last_link_id": 3,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "PonyJsonToBBox",
+      "pos": [
+        40,
+        100
+      ],
+      "size": [
+        360,
+        220
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "json",
+          "name": "json",
+          "type": "STRING",
+          "link": null
+        },
+        {
+          "localized_name": "mode",
+          "name": "mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "label",
+          "name": "label",
+          "type": "STRING",
+          "widget": {
+            "name": "label"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "label": "bboxes",
+          "localized_name": "bboxes",
+          "name": "bboxes",
+          "type": "BBOX",
+          "links": [
+            1
+          ]
+        },
+        {
+          "label": "image_list",
+          "localized_name": "image_list",
+          "name": "image_list",
+          "type": "IMAGE",
+          "links": []
+        }
+      ],
+      "title": "JSON 转边界框-小马",
+      "properties": {
+        "Node name for S&R": "PonyJsonToBBox"
+      },
+      "widgets_values": [
+        "simple",
+        ""
+      ]
+    },
+    {
+      "id": 2,
+      "type": "PonySelectBBox",
+      "pos": [
+        450,
+        100
+      ],
+      "size": [
+        360,
+        220
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "bboxes",
+          "name": "bboxes",
+          "type": "BBOX",
+          "link": 1
+        },
+        {
+          "localized_name": "image_index",
+          "name": "image_index",
+          "type": "INT",
+          "widget": {
+            "name": "image_index"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "bbox_index",
+          "name": "bbox_index",
+          "type": "INT",
+          "widget": {
+            "name": "bbox_index"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "label": "bbox",
+          "localized_name": "bbox",
+          "name": "bbox",
+          "type": "BBOX",
+          "links": [
+            2,
+            3
+          ]
+        }
+      ],
+      "title": "选择边界框-小马",
+      "properties": {
+        "Node name for S&R": "PonySelectBBox"
+      },
+      "widgets_values": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 3,
+      "type": "PonyBBoxToSEGS",
+      "pos": [
+        860,
+        100
+      ],
+      "size": [
+        360,
+        220
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "bboxes",
+          "name": "bboxes",
+          "type": "BBOX",
+          "link": 2
+        },
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "localized_name": "dilation",
+          "name": "dilation",
+          "type": "INT",
+          "widget": {
+            "name": "dilation"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "feather",
+          "name": "feather",
+          "type": "INT",
+          "widget": {
+            "name": "feather"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "label": "SEGS",
+          "localized_name": "SEGS",
+          "name": "SEGS",
+          "type": "SEGS",
+          "links": []
+        }
+      ],
+      "title": "边界框转 SEGS-小马",
+      "properties": {
+        "Node name for S&R": "PonyBBoxToSEGS"
+      },
+      "widgets_values": [
+        10,
+        0
+      ]
+    },
+    {
+      "id": 4,
+      "type": "PonyBBoxToMask",
+      "pos": [
+        860,
+        520
+      ],
+      "size": [
+        360,
+        220
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "bboxes",
+          "name": "bboxes",
+          "type": "BBOX",
+          "link": 3
+        },
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "localized_name": "dilation",
+          "name": "dilation",
+          "type": "INT",
+          "widget": {
+            "name": "dilation"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "feather",
+          "name": "feather",
+          "type": "INT",
+          "widget": {
+            "name": "feather"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "label": "mask",
+          "localized_name": "mask",
+          "name": "mask",
+          "type": "MASK",
+          "links": []
+        }
+      ],
+      "title": "边界框转遮罩-小马",
+      "properties": {
+        "Node name for S&R": "PonyBBoxToMask"
+      },
+      "widgets_values": [
+        10,
+        0
+      ]
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      2,
+      0,
+      "BBOX"
+    ],
+    [
+      2,
+      2,
+      0,
+      3,
+      0,
+      "BBOX"
+    ],
+    [
+      3,
+      2,
+      0,
+      4,
+      0,
+      "BBOX"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.75,
+      "offset": [
+        60,
+        60
+      ]
+    }
+  },
+  "version": 0.4
+}

@@ -1,0 +1,129 @@
+{
+  "id": "pony-json-cleanup",
+  "revision": 0,
+  "last_node_id": 3,
+  "last_link_id": 1,
+  "nodes": [
+    {
+      "id": 2,
+      "type": "PonyParseJson",
+      "pos": [
+        470,
+        120
+      ],
+      "size": [
+        360,
+        220
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "input",
+          "name": "input",
+          "type": "STRING",
+          "link": null
+        },
+        {
+          "localized_name": "key",
+          "name": "key",
+          "type": "STRING",
+          "widget": {
+            "name": "key"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "default",
+          "name": "default",
+          "type": "STRING",
+          "widget": {
+            "name": "default"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "label": "any",
+          "localized_name": "any",
+          "name": "any",
+          "type": "*",
+          "links": []
+        },
+        {
+          "label": "string",
+          "localized_name": "string",
+          "name": "string",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "label": "int",
+          "localized_name": "int",
+          "name": "int",
+          "type": "INT",
+          "links": []
+        },
+        {
+          "label": "float",
+          "localized_name": "float",
+          "name": "float",
+          "type": "FLOAT",
+          "links": []
+        },
+        {
+          "label": "boolean",
+          "localized_name": "boolean",
+          "name": "boolean",
+          "type": "BOOLEAN",
+          "links": []
+        }
+      ],
+      "title": "解析 JSON-小马",
+      "properties": {
+        "Node name for S&R": "PonyParseJson"
+      },
+      "widgets_values": [
+        "",
+        ""
+      ]
+    },
+    {
+      "id": 3,
+      "type": "MarkdownNote",
+      "pos": [
+        470,
+        460
+      ],
+      "size": [
+        460,
+        300
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "示例说明",
+      "properties": {},
+      "widgets_values": [
+        "Connect a JSON string from a model or API response to Parse JSON, then read values by dotted key path."
+      ]
+    }
+  ],
+  "links": [],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.75,
+      "offset": [
+        60,
+        60
+      ]
+    }
+  },
+  "version": 0.4
+}

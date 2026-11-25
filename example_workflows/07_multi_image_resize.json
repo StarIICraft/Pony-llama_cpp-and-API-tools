@@ -1,0 +1,346 @@
+{
+  "id": "pony-multi-image-resize",
+  "revision": 0,
+  "last_node_id": 3,
+  "last_link_id": 2,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "PonyMultiImageResize",
+      "pos": [
+        80,
+        400.0
+      ],
+      "size": [
+        360,
+        618
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "结果包",
+          "name": "result_bundle",
+          "type": "PONY_IMAGE_BUNDLE",
+          "link": 2
+        },
+        {
+          "localized_name": "resize_mode",
+          "name": "resize_mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "resize_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "megapixels",
+          "name": "megapixels",
+          "type": "FLOAT",
+          "widget": {
+            "name": "megapixels"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "area_multiplier",
+          "name": "area_multiplier",
+          "type": "FLOAT",
+          "widget": {
+            "name": "area_multiplier"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "color_preset",
+          "name": "color_preset",
+          "type": "COMBO",
+          "widget": {
+            "name": "color_preset"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "fill_color",
+          "name": "fill_color",
+          "type": "STRING",
+          "widget": {
+            "name": "fill_color"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "ratio_preset",
+          "name": "ratio_preset",
+          "type": "COMBO",
+          "widget": {
+            "name": "ratio_preset"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "aspect_ratio",
+          "name": "aspect_ratio",
+          "type": "STRING",
+          "widget": {
+            "name": "aspect_ratio"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "manual_width",
+          "name": "manual_width",
+          "type": "INT",
+          "widget": {
+            "name": "manual_width"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "manual_height",
+          "name": "manual_height",
+          "type": "INT",
+          "widget": {
+            "name": "manual_height"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "edge_length",
+          "name": "edge_length",
+          "type": "INT",
+          "widget": {
+            "name": "edge_length"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "crop_mode",
+          "name": "crop_mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "crop_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "resize_method",
+          "name": "resize_method",
+          "type": "COMBO",
+          "widget": {
+            "name": "resize_method"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "interpolation",
+          "name": "interpolation",
+          "type": "COMBO",
+          "widget": {
+            "name": "interpolation"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "divisor",
+          "name": "divisor",
+          "type": "INT",
+          "widget": {
+            "name": "divisor"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "label": "图1拓展遮罩",
+          "localized_name": "图1拓展遮罩 / Padding mask 1",
+          "name": "图1拓展遮罩 / Padding mask 1",
+          "type": "MASK",
+          "links": []
+        },
+        {
+          "label": "图1宽度",
+          "localized_name": "图1宽度 / Width 1",
+          "name": "图1宽度 / Width 1",
+          "type": "INT",
+          "links": []
+        },
+        {
+          "label": "图1高度",
+          "localized_name": "图1高度 / Height 1",
+          "name": "图1高度 / Height 1",
+          "type": "INT",
+          "links": []
+        },
+        {
+          "label": "执行报告",
+          "localized_name": "执行报告 / Report",
+          "name": "执行报告 / Report",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "label": "多图预览",
+          "localized_name": "多图预览 / Combined preview",
+          "name": "多图预览 / Combined preview",
+          "type": "IMAGE",
+          "links": []
+        }
+      ],
+      "title": "多图统一缩放-小马",
+      "properties": {
+        "Node name for S&R": "PonyMultiImageResize",
+        "imageBundleCompanionId": 3,
+        "ponyCompanionVerticalOffset": 300.0
+      },
+      "widgets_values": [
+        "统一百万像素限制 / Megapixel limit",
+        2.5,
+        1.0,
+        "灰色 / Gray",
+        "0,0,0",
+        "原图",
+        "1:1",
+        1024,
+        1024,
+        2048,
+        "填充 / Pad",
+        "自定义宽高 / Custom width and height",
+        "Lanczos",
+        32
+      ]
+    },
+    {
+      "id": 2,
+      "type": "MarkdownNote",
+      "pos": [
+        540,
+        100
+      ],
+      "size": [
+        460,
+        300
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "示例说明",
+      "properties": {},
+      "widgets_values": [
+        "Connect images 1-8 and an optional image-1 mask to the dynamic input/output companion. It outputs resized images, image-1 mask, and the image bundle. The controller outputs padding mask, width, height, report, and combined preview. Divisor defaults to 32."
+      ]
+    },
+    {
+      "id": 3,
+      "type": "PonyMultiImageResizeIO",
+      "pos": [
+        80.0,
+        68.0
+      ],
+      "size": [
+        360.0,
+        300
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "图像输入 1",
+          "name": "image_1",
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "localized_name": "图像输入 2",
+          "name": "image_2",
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "localized_name": "图像输入 3",
+          "name": "image_3",
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "localized_name": "图1遮罩",
+          "name": "mask_1",
+          "type": "MASK",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "label": "图1",
+          "localized_name": "图1 / Image 1",
+          "name": "图1 / Image 1",
+          "type": "IMAGE",
+          "links": []
+        },
+        {
+          "label": "图2",
+          "localized_name": "图2 / Image 2",
+          "name": "图2 / Image 2",
+          "type": "IMAGE",
+          "links": []
+        },
+        {
+          "label": "图3",
+          "localized_name": "图3 / Image 3",
+          "name": "图3 / Image 3",
+          "type": "IMAGE",
+          "links": []
+        },
+        {
+          "label": "图1遮罩",
+          "localized_name": "图1遮罩 / Mask 1",
+          "name": "图1遮罩 / Mask 1",
+          "type": "MASK",
+          "links": []
+        },
+        {
+          "label": "图像包",
+          "localized_name": "图像包 / Image bundle",
+          "name": "图像包 / Image bundle",
+          "type": "PONY_IMAGE_BUNDLE",
+          "links": [
+            2
+          ]
+        }
+      ],
+      "title": "动态图像输入输出-小马",
+      "properties": {
+        "Node name for S&R": "PonyMultiImageResizeIO",
+        "imageBundleOwnerId": 1
+      },
+      "widgets_values": []
+    }
+  ],
+  "links": [
+    [
+      2,
+      3,
+      4,
+      1,
+      0,
+      "PONY_IMAGE_BUNDLE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.75,
+      "offset": [
+        60,
+        60
+      ]
+    }
+  },
+  "version": 0.4
+}

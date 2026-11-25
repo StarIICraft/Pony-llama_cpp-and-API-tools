@@ -1,0 +1,616 @@
+{
+  "id": "pony-llama-local-pipeline",
+  "revision": 0,
+  "last_node_id": 5,
+  "last_link_id": 3,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "PonyLlamaCppModelLoader",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        360,
+        266
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "模型",
+          "name": "model",
+          "type": "COMBO",
+          "widget": {
+            "name": "model"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "多模态投影",
+          "name": "mmproj",
+          "type": "COMBO",
+          "widget": {
+            "name": "mmproj"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "对话处理器",
+          "name": "chat_handler",
+          "type": "COMBO",
+          "widget": {
+            "name": "chat_handler"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "上下文长度",
+          "name": "n_ctx",
+          "type": "INT",
+          "widget": {
+            "name": "n_ctx"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "显存上限",
+          "name": "vram_limit",
+          "type": "INT",
+          "widget": {
+            "name": "vram_limit"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "图像最小 Token 数",
+          "name": "image_min_tokens",
+          "type": "INT",
+          "widget": {
+            "name": "image_min_tokens"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "图像最大 Token 数",
+          "name": "image_max_tokens",
+          "type": "INT",
+          "widget": {
+            "name": "image_max_tokens"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "加载 MTP",
+          "name": "load_mtp",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "load_mtp"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "KV 缓存组合",
+          "name": "kv_cache_mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "kv_cache_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "MoE 专家上 CPU",
+          "name": "cpu_moe",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "cpu_moe"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "前 N 层专家上 CPU",
+          "name": "n_cpu_moe",
+          "type": "INT",
+          "widget": {
+            "name": "n_cpu_moe"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "label": "llama_model",
+          "localized_name": "llama_model",
+          "name": "llama_model",
+          "type": "LLAMACPPMODEL",
+          "links": [
+            1
+          ]
+        }
+      ],
+      "title": "Llama.cpp 模型加载器-小马",
+      "properties": {
+        "Node name for S&R": "PonyLlamaCppModelLoader"
+      },
+      "widgets_values": [
+        "Florence-2-base-PromptGen-v2.0\\model.safetensors",
+        "None",
+        "None",
+        8192,
+        -1,
+        0,
+        0,
+        false,
+        "K F16 / V F16",
+        false,
+        0
+      ],
+      "widgets_values_named": {
+        "model": "Florence-2-base-PromptGen-v2.0\\model.safetensors",
+        "mmproj": "None",
+        "chat_handler": "None",
+        "n_ctx": 8192,
+        "vram_limit": -1,
+        "image_min_tokens": 0,
+        "image_max_tokens": 0,
+        "load_mtp": false,
+        "cpu_moe": false,
+        "n_cpu_moe": 0,
+        "kv_cache_mode": "K F16 / V F16"
+      }
+    },
+    {
+      "id": 2,
+      "type": "PonyLlamaCppParameters",
+      "pos": [
+        450,
+        80
+      ],
+      "size": [
+        360,
+        376
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "最大 Token 数",
+          "name": "max_tokens",
+          "type": "INT",
+          "widget": {
+            "name": "max_tokens"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "Top K",
+          "name": "top_k",
+          "type": "INT",
+          "widget": {
+            "name": "top_k"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "Top P",
+          "name": "top_p",
+          "type": "FLOAT",
+          "widget": {
+            "name": "top_p"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "Min P",
+          "name": "min_p",
+          "type": "FLOAT",
+          "widget": {
+            "name": "min_p"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "Typical P",
+          "name": "typical_p",
+          "type": "FLOAT",
+          "widget": {
+            "name": "typical_p"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "温度",
+          "name": "temperature",
+          "type": "FLOAT",
+          "widget": {
+            "name": "temperature"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "重复惩罚",
+          "name": "repeat_penalty",
+          "type": "FLOAT",
+          "widget": {
+            "name": "repeat_penalty"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "频率惩罚",
+          "name": "frequency_penalty",
+          "type": "FLOAT",
+          "widget": {
+            "name": "frequency_penalty"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "出现惩罚",
+          "name": "present_penalty",
+          "type": "FLOAT",
+          "widget": {
+            "name": "present_penalty"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "Mirostat 模式",
+          "name": "mirostat_mode",
+          "type": "INT",
+          "widget": {
+            "name": "mirostat_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "Mirostat Eta",
+          "name": "mirostat_eta",
+          "type": "FLOAT",
+          "widget": {
+            "name": "mirostat_eta"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "Mirostat Tau",
+          "name": "mirostat_tau",
+          "type": "FLOAT",
+          "widget": {
+            "name": "mirostat_tau"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "Gemma4 思考预算 Token",
+          "name": "gemma4_reasoning_budget",
+          "type": "INT",
+          "widget": {
+            "name": "gemma4_reasoning_budget"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "label": "parameters",
+          "localized_name": "parameters",
+          "name": "parameters",
+          "type": "LLAMACPPARAMS",
+          "links": [
+            2
+          ]
+        }
+      ],
+      "title": "Llama.cpp 推理参数-小马",
+      "properties": {
+        "Node name for S&R": "PonyLlamaCppParameters"
+      },
+      "widgets_values": [
+        2048,
+        30,
+        0.9,
+        0.05,
+        1.0,
+        0.3,
+        1.0,
+        0.0,
+        0.0,
+        0,
+        0.1,
+        5.0,
+        -1
+      ],
+      "widgets_values_named": {
+        "max_tokens": 2048,
+        "top_k": 30,
+        "top_p": 0.9,
+        "min_p": 0.05,
+        "typical_p": 1.0,
+        "temperature": 0.3,
+        "repeat_penalty": 1.0,
+        "frequency_penalty": 0.0,
+        "present_penalty": 0.0,
+        "mirostat_mode": 0,
+        "mirostat_eta": 0.1,
+        "mirostat_tau": 5.0,
+        "gemma4_reasoning_budget": -1
+      }
+    },
+    {
+      "id": 3,
+      "type": "PonyLlamaCppInstruct",
+      "pos": [
+        860,
+        300.0
+      ],
+      "size": [
+        360,
+        596
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "llama_model",
+          "name": "llama_model",
+          "type": "LLAMACPPMODEL",
+          "link": 1
+        },
+        {
+          "localized_name": "parameters",
+          "name": "parameters",
+          "type": "LLAMACPPARAMS",
+          "link": 2
+        },
+        {
+          "localized_name": "图像包",
+          "name": "image_bundle",
+          "type": "PONY_IMAGE_BUNDLE",
+          "link": 3
+        },
+        {
+          "localized_name": "queue_handler",
+          "name": "queue_handler",
+          "type": "*",
+          "link": null
+        },
+        {
+          "localized_name": "skill",
+          "name": "skill",
+          "type": "STRING",
+          "link": null
+        },
+        {
+          "localized_name": "用户提示词",
+          "name": "custom_prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "custom_prompt"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "系统提示词",
+          "name": "system_prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "system_prompt"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "推理模式",
+          "name": "inference_mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "inference_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "最大帧数",
+          "name": "max_frames",
+          "type": "INT",
+          "widget": {
+            "name": "max_frames"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "最大图像像素（百万）",
+          "name": "max_megapixels",
+          "type": "FLOAT",
+          "widget": {
+            "name": "max_megapixels"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "随机种子",
+          "name": "seed",
+          "type": "INT",
+          "widget": {
+            "name": "seed"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "模型卸载方式",
+          "name": "unload_mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "unload_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "音频",
+          "name": "audio",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "label": "output",
+          "localized_name": "output",
+          "name": "output",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "label": "output_list",
+          "localized_name": "output_list",
+          "name": "output_list",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "title": "Llama.cpp 图像/音频/文本指令-小马",
+      "properties": {
+        "Node name for S&R": "PonyLlamaCppInstruct",
+        "imageBundleCompanionId": 5,
+        "ponyCompanionVerticalOffset": 220.0
+      },
+      "widgets_values": [
+        "",
+        "",
+        "images",
+        24,
+        0.3,
+        0,
+        "randomize",
+        "自动"
+      ],
+      "widgets_values_named": {
+        "custom_prompt": "",
+        "system_prompt": "",
+        "inference_mode": "images",
+        "max_frames": 24,
+        "max_megapixels": 0.3,
+        "seed": 0,
+        "control_after_generate": "randomize",
+        "unload_mode": "自动"
+      }
+    },
+    {
+      "id": 4,
+      "type": "MarkdownNote",
+      "pos": [
+        860,
+        820
+      ],
+      "size": [
+        460,
+        300
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "示例说明",
+      "properties": {},
+      "widgets_values": [
+        "Load model → configure sampling → run local text or multi-image inference.\n\nImage inputs remain above queue_handler and skill after dynamic add/remove."
+      ]
+    },
+    {
+      "type": "PonyImageInputBundle",
+      "pos": [
+        860.0,
+        48.0
+      ],
+      "size": [
+        360.0,
+        220
+      ],
+      "flags": {},
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "图像输入 1",
+          "name": "image_1",
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "localized_name": "图像输入 2",
+          "name": "image_2",
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "localized_name": "图像输入 3",
+          "name": "image_3",
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "label": "图像包",
+          "localized_name": "图像包",
+          "name": "图像包",
+          "type": "PONY_IMAGE_BUNDLE",
+          "links": [
+            3
+          ]
+        }
+      ],
+      "title": "动态图像输入-小马",
+      "properties": {
+        "Node name for S&R": "PonyImageInputBundle",
+        "imageBundleMaxImages": 10,
+        "imageBundleOwnerId": 3
+      },
+      "widgets_values": [],
+      "id": 5,
+      "order": 5
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      3,
+      0,
+      "LLAMACPPMODEL"
+    ],
+    [
+      2,
+      2,
+      0,
+      3,
+      1,
+      "LLAMACPPARAMS"
+    ],
+    [
+      3,
+      5,
+      0,
+      3,
+      2,
+      "PONY_IMAGE_BUNDLE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.75,
+      "offset": [
+        60,
+        60
+      ]
+    }
+  },
+  "version": 0.4
+}

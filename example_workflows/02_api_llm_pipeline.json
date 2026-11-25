@@ -1,0 +1,380 @@
+{
+  "id": "pony-api-llm-pipeline",
+  "revision": 0,
+  "last_node_id": 4,
+  "last_link_id": 2,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "PonyApiLlmLoader",
+      "pos": [
+        40,
+        100
+      ],
+      "size": [
+        360,
+        220
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "模型名称",
+          "name": "模型名称",
+          "type": "STRING",
+          "widget": {
+            "name": "模型名称"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "接口地址",
+          "name": "接口地址",
+          "type": "STRING",
+          "widget": {
+            "name": "接口地址"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "接口密钥",
+          "name": "接口密钥",
+          "type": "STRING",
+          "widget": {
+            "name": "接口密钥"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "请求超时",
+          "name": "请求超时",
+          "type": "INT",
+          "widget": {
+            "name": "请求超时"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "label": "模型",
+          "localized_name": "模型",
+          "name": "模型",
+          "type": "MINI_OPENAI_API_MODEL",
+          "links": [
+            1
+          ]
+        }
+      ],
+      "title": "☁️API LLM 加载器-小马",
+      "properties": {
+        "Node name for S&R": "PonyApiLlmLoader"
+      },
+      "widgets_values": [
+        "gpt-4o-mini",
+        "https://api.openai.com/v1",
+        "",
+        180
+      ]
+    },
+    {
+      "id": 2,
+      "type": "PonyApiLlmChain",
+      "pos": [
+        450,
+        320.0
+      ],
+      "size": [
+        360,
+        618
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "模型",
+          "name": "模型",
+          "type": "MINI_OPENAI_API_MODEL",
+          "link": 1
+        },
+        {
+          "localized_name": "系统提示词",
+          "name": "系统提示词",
+          "type": "STRING",
+          "widget": {
+            "name": "系统提示词"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "用户提示词",
+          "name": "用户提示词",
+          "type": "STRING",
+          "widget": {
+            "name": "用户提示词"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "推理模式",
+          "name": "推理模式",
+          "type": "COMBO",
+          "widget": {
+            "name": "推理模式"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "最大生成长度",
+          "name": "最大生成长度",
+          "type": "INT",
+          "widget": {
+            "name": "最大生成长度"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "长度参数类型",
+          "name": "长度参数类型",
+          "type": "COMBO",
+          "widget": {
+            "name": "长度参数类型"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "发送温度参数",
+          "name": "发送温度参数",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "发送温度参数"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "生成温度",
+          "name": "生成温度",
+          "type": "FLOAT",
+          "widget": {
+            "name": "生成温度"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "图片像素上限",
+          "name": "图片像素上限",
+          "type": "FLOAT",
+          "widget": {
+            "name": "图片像素上限"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "流式响应",
+          "name": "流式响应",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "流式响应"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "联网搜索",
+          "name": "联网搜索",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "联网搜索"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "搜索关键词",
+          "name": "搜索关键词",
+          "type": "STRING",
+          "widget": {
+            "name": "搜索关键词"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "图像包",
+          "name": "image_bundle",
+          "type": "PONY_IMAGE_BUNDLE",
+          "link": 2
+        },
+        {
+          "localized_name": "额外参数",
+          "name": "额外参数",
+          "type": "STRING",
+          "widget": {
+            "name": "额外参数"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "skill",
+          "name": "skill",
+          "type": "STRING",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "label": "回复文本",
+          "localized_name": "回复文本",
+          "name": "回复文本",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "label": "回复列表",
+          "localized_name": "回复列表",
+          "name": "回复列表",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "label": "请求记录",
+          "localized_name": "请求记录",
+          "name": "请求记录",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "label": "推理内容",
+          "localized_name": "推理内容",
+          "name": "推理内容",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "title": "☁️API LLM通用链路-小马",
+      "properties": {
+        "Node name for S&R": "PonyApiLlmChain",
+        "imageBundleCompanionId": 4,
+        "ponyCompanionVerticalOffset": 220.0
+      },
+      "widgets_values": [
+        "你是一个有帮助的人工智能助手。",
+        "你是什么模型。",
+        "多图合并",
+        4096,
+        "max_tokens",
+        true,
+        0.7,
+        0.5,
+        true,
+        false,
+        "",
+        "{}"
+      ]
+    },
+    {
+      "id": 3,
+      "type": "MarkdownNote",
+      "pos": [
+        450,
+        860
+      ],
+      "size": [
+        460,
+        300
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "示例说明",
+      "properties": {},
+      "widgets_values": [
+        "Connect the API loader to the universal chain. Images, system prompts, user prompts, and skill inputs keep stable names after dynamic changes."
+      ]
+    },
+    {
+      "type": "PonyImageInputBundle",
+      "pos": [
+        450.0,
+        68.0
+      ],
+      "size": [
+        360.0,
+        220
+      ],
+      "flags": {},
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "图像输入 1",
+          "name": "image_1",
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "localized_name": "图像输入 2",
+          "name": "image_2",
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "localized_name": "图像输入 3",
+          "name": "image_3",
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "label": "图像包",
+          "localized_name": "图像包",
+          "name": "图像包",
+          "type": "PONY_IMAGE_BUNDLE",
+          "links": [
+            2
+          ]
+        }
+      ],
+      "title": "动态图像输入-小马",
+      "properties": {
+        "Node name for S&R": "PonyImageInputBundle",
+        "imageBundleMaxImages": 10,
+        "imageBundleOwnerId": 2
+      },
+      "widgets_values": [],
+      "id": 4,
+      "order": 4
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      2,
+      0,
+      "MINI_OPENAI_API_MODEL"
+    ],
+    [
+      2,
+      4,
+      0,
+      2,
+      12,
+      "PONY_IMAGE_BUNDLE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.75,
+      "offset": [
+        60,
+        60
+      ]
+    }
+  },
+  "version": 0.4
+}

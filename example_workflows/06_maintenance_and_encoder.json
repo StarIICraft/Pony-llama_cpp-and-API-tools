@@ -1,0 +1,142 @@
+{
+  "id": "pony-maintenance-encoder",
+  "revision": 0,
+  "last_node_id": 4,
+  "last_link_id": 3,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "PonyPromptEnhancerPreset",
+      "pos": [
+        40,
+        100
+      ],
+      "size": [
+        360,
+        220
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "preset",
+          "name": "preset",
+          "type": "COMBO",
+          "widget": {
+            "name": "preset"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "label": "system_prompt",
+          "localized_name": "system_prompt",
+          "name": "system_prompt",
+          "type": "STRING",
+          "links": [
+            1
+          ]
+        }
+      ],
+      "title": "提示词增强预设-小马",
+      "properties": {
+        "Node name for S&R": "PonyPromptEnhancerPreset"
+      },
+      "widgets_values": [
+        "01_图像编辑提示增强功能"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "PonyLlamaCppTextEncoder",
+      "pos": [
+        450,
+        100
+      ],
+      "size": [
+        360,
+        220
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "llama_model",
+          "name": "llama_model",
+          "type": "LLAMACPPMODEL",
+          "link": null
+        },
+        {
+          "localized_name": "prompt",
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 1
+        },
+        {
+          "localized_name": "type",
+          "name": "type",
+          "type": "COMBO",
+          "widget": {
+            "name": "type"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "force_offload",
+          "name": "force_offload",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "force_offload"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "label": "conditioning",
+          "localized_name": "conditioning",
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "links": []
+        }
+      ],
+      "title": "Llama.cpp 文本编码器-小马",
+      "properties": {
+        "Node name for S&R": "PonyLlamaCppTextEncoder"
+      },
+      "widgets_values": [
+        "",
+        "Z-Image",
+        false
+      ]
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      2,
+      1,
+      "STRING"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.75,
+      "offset": [
+        60,
+        60
+      ]
+    }
+  },
+  "version": 0.4
+}
