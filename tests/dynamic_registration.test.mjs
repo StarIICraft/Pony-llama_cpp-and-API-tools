@@ -317,6 +317,396 @@ test("resize controller creates and connects its I/O companion", async () => {
 });
 
 
+test("main-only copy does not steal or move the original companion", async () => {
+    const extension = await loadExtension();
+    const graph = {
+        _nodes: [],
+        links: new Map(),
+        add(node) {
+            this._nodes.push(node);
+        },
+        getNodeById(id) {
+            return this._nodes.find(
+                node => String(node.id) === String(id),
+            ) || null;
+        },
+        setDirtyCanvas() {},
+    };
+
+    function companion(id) {
+        return {
+            id,
+            type: "PonyMultiImageResizeIO",
+            inputs: [],
+            outputs: Array.from({ length: 10 }, (_, index) => ({
+                name: `output_${index}`,
+                type: index < 8 ? "IMAGE" : "MASK",
+                links: [],
+            })),
+            properties: {},
+            size: [320, 240],
+            pos: [0, 0],
+            graph,
+            addInput(name, type) {
+                const input = { name, type, link: null };
+                this.inputs.push(input);
+                return input;
+            },
+            removeInput(index) {
+                this.inputs.splice(index, 1);
+            },
+            computeSize() {
+                return [320, 300];
+            },
+            setSize(size) {
+                this.size = size;
+            },
+            arrange() {},
+            setDirtyCanvas() {},
+            _setConcreteSlots() {},
+            connect(originSlot, targetNode, targetSlot) {
+                const link = {
+                    id: this.id + originSlot,
+                    origin_id: this.id,
+                    origin_slot: originSlot,
+                    target_id: targetNode.id,
+                    target_slot: targetSlot,
+                    type: "PONY_IMAGE_BUNDLE",
+                };
+                graph.links.set(link.id, link);
+                return link;
+            },
+        };
+    }
+
+    const originalMain = {
+        id: 10,
+        type: "PonyMultiImageResize",
+        comfyClass: "PonyMultiImageResize",
+        inputs: [{
+            name: "result_bundle",
+            type: "PONY_IMAGE_BUNDLE",
+            link: 100,
+        }],
+        outputs: [],
+        properties: { imageBundleCompanionId: 50 },
+        size: [320, 300],
+        pos: [100, 700],
+        graph,
+        setDirtyCanvas() {},
+    };
+    const originalCompanion = companion(50);
+    originalCompanion.properties.imageBundleOwnerId = 10;
+    originalCompanion.pos = [100, 428];
+    originalCompanion.inputs = [
+        ...[1, 2, 3, 4, 5].map(index => ({
+            name: `image_${index}`,
+            type: "IMAGE",
+            link: null,
+        })),
+        { name: "mask_1", type: "MASK", link: null },
+        { name: "resize_config", type: "STRING", link: null },
+    ];
+    originalCompanion.outputs = [
+        ...[1, 2, 3, 4, 5].map(index => ({
+            name: `图${index} / Image ${index}`,
+            type: "IMAGE",
+            links: [],
+        })),
+        {
+            name: "图1遮罩 / Mask 1",
+            type: "MASK",
+            links: [200],
+        },
+        {
+            name: "图像包 / Image bundle",
+            type: "PONY_IMAGE_BUNDLE",
+            links: [],
+        },
+    ];
+    graph.links.set(200, {
+        id: 200,
+        origin_id: 50,
+        origin_slot: 5,
+        target_id: 99,
+        target_slot: 0,
+        type: "MASK",
+    });
+    graph.links.set(100, {
+        id: 100,
+        origin_id: 50,
+        origin_slot: 9,
+        target_id: 10,
+        target_slot: 0,
+        type: "PONY_IMAGE_BUNDLE",
+    });
+
+    const copiedMain = {
+        ...originalMain,
+        id: 11,
+        inputs: [{
+            name: "result_bundle",
+            type: "PONY_IMAGE_BUNDLE",
+            link: null,
+        }],
+        properties: { imageBundleCompanionId: 50 },
+        pos: [600, 700],
+    };
+    const createdCompanion = companion(60);
+    graph._nodes.push(
+        originalMain,
+        originalCompanion,
+        copiedMain,
+    );
+    globalThis.app.graph = graph;
+    globalThis.LiteGraph.createNode = type => (
+        type === "PonyMultiImageResizeIO"
+            ? createdCompanion
+            : null
+    );
+
+    extension.setup();
+    extension.loadedGraphNode(copiedMain);
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    assert.equal(copiedMain.properties.imageBundleCompanionId, 60);
+    assert.equal(
+        createdCompanion.properties.imageBundleOwnerId,
+        11,
+    );
+    assert.equal(
+        originalCompanion.properties.imageBundleOwnerId,
+        10,
+    );
+    assert.equal(originalMain.properties.imageBundleCompanionId, 50);
+    assert.equal(originalCompanion.pos[0], 100);
+    assert.equal(originalCompanion.pos[1], 428);
+    assert.ok([...graph.links.values()].some(link => (
+        link.origin_id === 60
+        && link.target_id === 11
+        && link.type === "PONY_IMAGE_BUNDLE"
+    )));
+});
+
+
+test("pasted companion with stale owner is adopted instead of duplicated", async () => {
+    const extension = await loadExtension();
+    const graph = {
+        _nodes: [],
+        links: new Map(),
+        add(node) {
+            this._nodes.push(node);
+        },
+        getNodeById(id) {
+            return this._nodes.find(
+                node => String(node.id) === String(id),
+            ) || null;
+        },
+        setDirtyCanvas() {},
+    };
+
+    class CompanionNode {
+        constructor() {
+            this.inputs = [];
+            this.outputs = Array.from({ length: 10 }, (_, index) => ({
+                name: `output_${index}`,
+                type: index < 8 ? "IMAGE" : "MASK",
+                links: [],
+            }));
+            this.properties = {};
+            this.size = [320, 240];
+            this.pos = [0, 0];
+            this.graph = graph;
+        }
+
+        addInput(name, type) {
+            const input = { name, type, link: null };
+            this.inputs.push(input);
+            return input;
+        }
+
+        removeInput(index) {
+            this.inputs.splice(index, 1);
+        }
+
+        addOutput(name, type, options = {}) {
+            const output = {
+                name,
+                type,
+                label: options.label,
+                links: [],
+            };
+            this.outputs.push(output);
+            return output;
+        }
+
+        computeSize() {
+            return [320, 300];
+        }
+
+        setSize(size) {
+            this.size = size;
+        }
+
+        arrange() {}
+        setDirtyCanvas() {}
+        _setConcreteSlots() {}
+
+        connect(originSlot, targetNode, targetSlot) {
+            const link = {
+                id: this.id + originSlot,
+                origin_id: this.id,
+                origin_slot: originSlot,
+                target_id: targetNode.id,
+                target_slot: targetSlot,
+                type: "PONY_IMAGE_BUNDLE",
+            };
+            graph.links.set(link.id, link);
+            return link;
+        }
+    }
+
+    class MainNode {
+        constructor() {
+            this.inputs = [{
+                name: "result_bundle",
+                type: "PONY_IMAGE_BUNDLE",
+                link: null,
+            }];
+            this.outputs = [];
+            this.properties = {};
+            this.size = [320, 300];
+            this.pos = [0, 0];
+            this.graph = graph;
+        }
+
+        setDirtyCanvas() {}
+    }
+
+    await extension.beforeRegisterNodeDef(
+        MainNode,
+        { name: "PonyMultiImageResize" },
+    );
+    await extension.beforeRegisterNodeDef(
+        CompanionNode,
+        { name: "PonyMultiImageResizeIO" },
+    );
+
+    const originalMain = new MainNode();
+    originalMain.id = 10;
+    originalMain.type = "PonyMultiImageResize";
+    originalMain.comfyClass = "PonyMultiImageResize";
+    originalMain.properties.imageBundleCompanionId = 50;
+    originalMain.pos = [100, 700];
+    const originalCompanion = new CompanionNode();
+    originalCompanion.id = 50;
+    originalCompanion.type = "PonyMultiImageResizeIO";
+    originalCompanion.comfyClass = "PonyMultiImageResizeIO";
+    originalCompanion.properties.imageBundleOwnerId = 10;
+    originalCompanion.pos = [100, 428];
+    originalCompanion.inputs = [
+        ...[1, 2, 3, 4, 5].map(index => ({
+            name: `image_${index}`,
+            type: "IMAGE",
+            link: null,
+        })),
+        { name: "mask_1", type: "MASK", link: null },
+        { name: "resize_config", type: "STRING", link: null },
+    ];
+    originalCompanion.outputs = [
+        ...[1, 2, 3, 4, 5].map(index => ({
+            name: `图${index} / Image ${index}`,
+            type: "IMAGE",
+            links: [],
+        })),
+        {
+            name: "图1遮罩 / Mask 1",
+            type: "MASK",
+            links: [200],
+        },
+        {
+            name: "图像包 / Image bundle",
+            type: "PONY_IMAGE_BUNDLE",
+            links: [],
+        },
+    ];
+    graph.links.set(200, {
+        id: 200,
+        origin_id: 50,
+        origin_slot: 5,
+        target_id: 99,
+        target_slot: 0,
+        type: "MASK",
+    });
+    const originalLink = {
+        id: 100,
+        origin_id: 50,
+        origin_slot: 9,
+        target_id: 10,
+        target_slot: 0,
+        type: "PONY_IMAGE_BUNDLE",
+    };
+    graph.links.set(100, originalLink);
+    originalMain.inputs[0].link = 100;
+
+    const pastedMain = new MainNode();
+    pastedMain.id = 11;
+    pastedMain.type = "PonyMultiImageResize";
+    pastedMain.comfyClass = "PonyMultiImageResize";
+    pastedMain.properties.imageBundleCompanionId = 50;
+    pastedMain.pos = [600, 700];
+    const pastedCompanion = new CompanionNode();
+    pastedCompanion.id = 60;
+    pastedCompanion.type = "PonyMultiImageResizeIO";
+    pastedCompanion.comfyClass = "PonyMultiImageResizeIO";
+    pastedCompanion.properties.imageBundleOwnerId = 10;
+    pastedCompanion.pos = [600, 428];
+    graph._nodes.push(
+        originalMain,
+        originalCompanion,
+        pastedMain,
+        pastedCompanion,
+    );
+    globalThis.app.graph = graph;
+    globalThis.LiteGraph.createNode = () => {
+        throw new Error("must reuse the pasted companion");
+    };
+
+    pastedMain.onConfigure({ id: 10 });
+    pastedCompanion.onConfigure({ id: 50 });
+    await new Promise(resolve => setTimeout(resolve, 120));
+    extension.afterConfigureGraph();
+
+    assert.equal(pastedMain.properties.imageBundleCompanionId, 60);
+    assert.equal(
+        pastedCompanion.properties.imageBundleOwnerId,
+        11,
+    );
+    assert.equal(
+        originalCompanion.properties.imageBundleOwnerId,
+        10,
+    );
+    assert.ok([...graph.links.values()].some(link => (
+        link.origin_id === 60
+        && link.target_id === 11
+        && link.type === "PONY_IMAGE_BUNDLE"
+    )));
+    assert.equal(graph.links.get(200).origin_id, 50);
+    const originalMaskIndex = originalCompanion.outputs.findIndex(
+        output => output.name.startsWith("图1遮罩"),
+    );
+    assert.ok(originalMaskIndex >= 0);
+    assert.equal(
+        graph.links.get(200).origin_slot,
+        originalMaskIndex,
+    );
+    assert.equal(
+        originalCompanion.outputs[originalMaskIndex].name,
+        "图1遮罩 / Mask 1",
+    );
+});
+
+
 test("queueing injects controller widgets into the companion config", async () => {
     const extension = await loadExtension();
     const app = globalThis.app;
