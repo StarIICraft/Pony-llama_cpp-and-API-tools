@@ -177,3 +177,215 @@ test("applies localized labels to the combo widget menu", async () => {
     widget.callback();
     assert.notEqual(areaWidget.type, "hidden");
 });
+
+
+test("copied or template-loaded modes hide all irrelevant controls", async () => {
+    const { extension } = await loadLocalization();
+    const allWidgets = [
+        "resize_mode",
+        "megapixels",
+        "area_multiplier",
+        "color_preset",
+        "fill_color",
+        "ratio_preset",
+        "aspect_ratio",
+        "manual_width",
+        "manual_height",
+        "edge_length",
+        "crop_mode",
+        "resize_method",
+        "interpolation",
+        "divisor",
+    ];
+    const values = {
+        resize_mode: "统一百万像素限制 / Megapixel limit",
+        megapixels: 2.5,
+        area_multiplier: 1,
+        color_preset: "灰色 / Gray",
+        fill_color: "0,0,0",
+        ratio_preset: "原图",
+        aspect_ratio: "1:1",
+        manual_width: 1024,
+        manual_height: 1024,
+        edge_length: 2048,
+        crop_mode: "填充 / Pad",
+        resize_method: "自定义宽高 / Custom width and height",
+        interpolation: "Lanczos",
+        divisor: 32,
+    };
+    const cases = [
+        {
+            name: "megapixel limit",
+            values: {},
+            visible: [
+                "resize_mode",
+                "megapixels",
+                "area_multiplier",
+                "interpolation",
+                "divisor",
+            ],
+        },
+        {
+            name: "force megapixel",
+            values: {
+                resize_mode:
+                    "所有图像强制缩放到百万像素 / Force megapixel size",
+            },
+            visible: [
+                "resize_mode",
+                "megapixels",
+                "area_multiplier",
+                "interpolation",
+                "divisor",
+            ],
+        },
+        {
+            name: "manual custom padding",
+            values: {
+                resize_mode:
+                    "图1手动尺寸/边模式 / Image 1 manual size or edge",
+                color_preset: "自定义 / Custom",
+                resize_method:
+                    "自定义宽高 / Custom width and height",
+                crop_mode: "填充 / Pad",
+            },
+            visible: [
+                "resize_mode",
+                "color_preset",
+                "fill_color",
+                "manual_width",
+                "manual_height",
+                "crop_mode",
+                "resize_method",
+                "interpolation",
+                "divisor",
+            ],
+        },
+        {
+            name: "manual custom crop",
+            values: {
+                resize_mode:
+                    "图1手动尺寸/边模式 / Image 1 manual size or edge",
+                resize_method:
+                    "自定义宽高 / Custom width and height",
+                crop_mode: "裁剪 / Crop",
+            },
+            visible: [
+                "resize_mode",
+                "manual_width",
+                "manual_height",
+                "crop_mode",
+                "resize_method",
+                "interpolation",
+                "divisor",
+            ],
+        },
+        {
+            name: "manual edge",
+            values: {
+                resize_mode:
+                    "图1手动尺寸/边模式 / Image 1 manual size or edge",
+                resize_method:
+                    "按长边保持比例 / Fit long edge",
+            },
+            visible: [
+                "resize_mode",
+                "edge_length",
+                "resize_method",
+                "interpolation",
+                "divisor",
+            ],
+        },
+        {
+            name: "aspect-ratio padding",
+            values: {
+                resize_mode:
+                    "统一比例填充 / Pad to aspect ratio",
+            },
+            visible: [
+                "resize_mode",
+                "color_preset",
+                "ratio_preset",
+                "interpolation",
+                "divisor",
+            ],
+        },
+        {
+            name: "padding custom color and manual ratio",
+            values: {
+                resize_mode:
+                    "统一比例填充 / Pad to aspect ratio",
+                color_preset: "自定义 / Custom",
+                ratio_preset: "手动",
+                aspect_ratio: "16:9",
+            },
+            visible: [
+                "resize_mode",
+                "color_preset",
+                "fill_color",
+                "ratio_preset",
+                "aspect_ratio",
+                "interpolation",
+                "divisor",
+            ],
+        },
+    ];
+
+    class ResizeNode {
+        constructor(widgetValues) {
+            this.comfyClass = "PonyMultiImageResize";
+            this.type = "PonyMultiImageResize";
+            this.properties = {};
+            this.inputs = [];
+            this.outputs = [];
+            this.size = [320, 200];
+            this.widgets = Object.entries(values).map(
+                ([name, value]) => ({
+                    name,
+                    type: name === "resize_mode" ? "combo" : "number",
+                    value: widgetValues[name] ?? value,
+                }),
+            );
+        }
+
+        computeSize() {
+            return [320, 200];
+        }
+
+        setSize(size) {
+            this.size = size;
+        }
+
+        setDirtyCanvas() {}
+    }
+
+    await extension.beforeRegisterNodeDef(
+        ResizeNode,
+        { name: "PonyMultiImageResize" },
+    );
+    for (const testCase of cases) {
+        const node = new ResizeNode(testCase.values);
+        node.onNodeCreated();
+        node.onConfigure({ id: 999 });
+        await new Promise(resolve => setTimeout(resolve, 30));
+
+        const widget = name => node.widgets.find(
+            item => item.name === name,
+        );
+        for (const name of allWidgets) {
+            if (testCase.visible.includes(name)) {
+                assert.notEqual(
+                    widget(name).type,
+                    "hidden",
+                    `${testCase.name}: ${name}`,
+                );
+            } else {
+                assert.equal(
+                    widget(name).type,
+                    "hidden",
+                    `${testCase.name}: ${name}`,
+                );
+            }
+        }
+    }
+});
