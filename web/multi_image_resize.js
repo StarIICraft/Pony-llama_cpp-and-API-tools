@@ -83,6 +83,7 @@ const FIXED_OUTPUT_LABELS = [
 const widgetStates = new WeakMap();
 const comboLabelStates = new WeakMap();
 const hookedWidgets = new WeakSet();
+const initializeTimers = new WeakMap();
 
 function findWidget(node, name) {
     return node.widgets?.find(widget => widget.name === name);
@@ -285,7 +286,7 @@ function updateNode(node) {
     const manualRatio = valueOf(node, "ratio_preset") === "手动";
 
     const visibility = {
-        megapixels: !manual,
+        megapixels: limit || force,
         area_multiplier: limit || force,
         color_preset: needsFillColor,
         fill_color: needsFillColor && isCustomColor,
@@ -347,6 +348,28 @@ function initialize(node) {
     updateNode(node);
 }
 
+
+function scheduleInitialize(node) {
+    clearTimeout(initializeTimers.get(node));
+    const timer = setTimeout(() => {
+        if (app.configuringGraph) {
+            scheduleInitialize(node);
+            return;
+        }
+        initializeTimers.delete(node);
+        initialize(node);
+        if (typeof requestAnimationFrame === "function") {
+            requestAnimationFrame(() => {
+                if (!app.configuringGraph) {
+                    initialize(node);
+                }
+            });
+        }
+    }, 0);
+    initializeTimers.set(node, timer);
+}
+
+
 app.registerExtension({
     name: "PonyToolbox.MultiImageResize.UI",
 
@@ -356,15 +379,28 @@ app.registerExtension({
         const previousCreated = nodeType.prototype.onNodeCreated;
         nodeType.prototype.onNodeCreated = function (...args) {
             const result = previousCreated?.apply(this, args);
-            queueMicrotask(() => initialize(this));
+            scheduleInitialize(this);
             return result;
         };
 
         const previousConfigure = nodeType.prototype.onConfigure;
         nodeType.prototype.onConfigure = function (...args) {
             const result = previousConfigure?.apply(this, args);
-            queueMicrotask(() => initialize(this));
+            scheduleInitialize(this);
             return result;
         };
+
+        const previousAdded = nodeType.prototype.onAdded;
+        nodeType.prototype.onAdded = function (...args) {
+            const result = previousAdded?.apply(this, args);
+            scheduleInitialize(this);
+            return result;
+        };
+    },
+
+    loadedGraphNode(node) {
+        if ([NODE_NAME, IO_NODE_NAME].includes(node?.comfyClass)) {
+            scheduleInitialize(node);
+        }
     },
 });
