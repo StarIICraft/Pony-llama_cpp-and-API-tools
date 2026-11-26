@@ -84,6 +84,7 @@ const widgetStates = new WeakMap();
 const comboLabelStates = new WeakMap();
 const hookedWidgets = new WeakSet();
 const initializeTimers = new WeakMap();
+const visibilitySignatures = new WeakMap();
 
 function findWidget(node, name) {
     return node.widgets?.find(widget => widget.name === name);
@@ -91,6 +92,42 @@ function findWidget(node, name) {
 
 function valueOf(node, name) {
     return String(resolvedWidgetValue(node, name) ?? "");
+}
+
+
+function visibilitySignature(node) {
+    return JSON.stringify([
+        node?.widgets?.length || 0,
+        (node?.widgets || []).map(widget => widget?.name),
+        valueOf(node, "resize_mode"),
+        valueOf(node, "resize_method"),
+        valueOf(node, "crop_mode"),
+        valueOf(node, "color_preset"),
+        valueOf(node, "ratio_preset"),
+    ]);
+}
+
+
+function eachGraphNode(visitor) {
+    const seen = new Set();
+
+    function visit(graph) {
+        if (!graph || seen.has(graph)) {
+            return;
+        }
+        seen.add(graph);
+        for (const node of graph?._nodes || graph?.nodes || []) {
+            visitor(node);
+            if (node?.subgraph) {
+                visit(node.subgraph);
+            }
+        }
+    }
+
+    visit(app?.graph);
+    if (app?.rootGraph !== app?.graph) {
+        visit(app?.rootGraph);
+    }
 }
 
 
@@ -317,6 +354,7 @@ function updateNode(node) {
     }
 
     node.setDirtyCanvas(true, true);
+    visibilitySignatures.set(node, visibilitySignature(node));
 }
 
 function hookWidget(node, name) {
@@ -330,6 +368,7 @@ function hookWidget(node, name) {
         try {
             return previous?.apply(this, args);
         } finally {
+            visibilitySignatures.delete(node);
             updateNode(node);
         }
     };
@@ -350,6 +389,7 @@ function initialize(node) {
 
 
 function scheduleInitialize(node) {
+    visibilitySignatures.delete(node);
     clearTimeout(initializeTimers.get(node));
     const timer = setTimeout(() => {
         if (app.configuringGraph) {
@@ -370,8 +410,35 @@ function scheduleInitialize(node) {
 }
 
 
+function installVisibilitySweep() {
+    const canvas = app?.canvas;
+    if (!canvas || canvas.__ponyResizeVisibilitySweep) {
+        return;
+    }
+    canvas.__ponyResizeVisibilitySweep = true;
+    const previous = canvas.onDrawForeground;
+    canvas.onDrawForeground = function (...args) {
+        const result = previous?.apply(this, args);
+        eachGraphNode(node => {
+            if ((node?.comfyClass || node?.type) !== NODE_NAME) {
+                return;
+            }
+            const signature = visibilitySignature(node);
+            if (visibilitySignatures.get(node) !== signature) {
+                updateNode(node);
+            }
+        });
+        return result;
+    };
+}
+
+
 app.registerExtension({
     name: "PonyToolbox.MultiImageResize.UI",
+
+    setup() {
+        installVisibilitySweep();
+    },
 
     async beforeRegisterNodeDef(nodeType, nodeData) {
         if (![NODE_NAME, IO_NODE_NAME].includes(nodeData.name)) return;
