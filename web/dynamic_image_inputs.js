@@ -15,6 +15,8 @@ globalThis.app ||= app;
 
 const compactTimers = new WeakMap();
 const companionTimers = new WeakMap();
+const configureSourceIds = new WeakMap();
+const resolvedCompanions = new WeakMap();
 const MAIN_NODE_TYPES = new Set([
     "PonyLlamaCppInstruct",
     "PonyApiLlmChain",
@@ -48,6 +50,17 @@ const RESIZE_CONFIG_FIELDS = [
 
 function graphNodes(graph) {
     return graph?._nodes || graph?.nodes || [];
+}
+
+
+function graphLinks(graph) {
+    const links = graph?.links;
+    if (!links) {
+        return [];
+    }
+    return typeof links.values === "function"
+        ? [...links.values()]
+        : Object.values(links);
 }
 
 
@@ -216,6 +229,142 @@ function nodeById(node, id) {
 }
 
 
+function rememberConfigureSource(node, info) {
+    const sourceId = info?.id;
+    if (sourceId !== undefined && sourceId !== null) {
+        configureSourceIds.set(node, String(sourceId));
+    }
+}
+
+
+function isMainNodeType(type) {
+    return MAIN_NODE_TYPES.has(type);
+}
+
+
+function companionTargetIds(node, companion) {
+    const ids = new Set();
+    for (const link of graphLinks(node?.graph)) {
+        if (
+            String(link?.origin_id) !== String(companion?.id)
+        ) {
+            continue;
+        }
+        const target = nodeById(node, link.target_id);
+        if (target && isMainNodeType(target.type)) {
+            ids.add(String(target.id));
+        }
+    }
+    return ids;
+}
+
+
+function companionPositionDistance(node, companion) {
+    const titleHeight = (
+        Number(globalThis.LiteGraph?.NODE_TITLE_HEIGHT) || 30
+    );
+    const expectedX = Number(node?.pos?.[0]) || 0;
+    const expectedY = (
+        (Number(node?.pos?.[1]) || 0)
+        - titleHeight
+        - (Number(companion?.size?.[1]) || 260)
+        - COMPANION_VERTICAL_GAP
+    );
+    const dx = (
+        (Number(companion?.pos?.[0]) || 0) - expectedX
+    );
+    const dy = (
+        (Number(companion?.pos?.[1]) || 0) - expectedY
+    );
+    return dx * dx + dy * dy;
+}
+
+
+function companionPositionedFor(owner, companion) {
+    if (!owner?.pos || !companion?.pos) {
+        return false;
+    }
+    const titleHeight = (
+        Number(globalThis.LiteGraph?.NODE_TITLE_HEIGHT) || 30
+    );
+    const expectedY = (
+        (Number(owner.pos?.[1]) || 0)
+        - titleHeight
+        - (Number(companion.size?.[1]) || 260)
+        - COMPANION_VERTICAL_GAP
+    );
+    return (
+        Math.abs(
+            (Number(companion.pos?.[0]) || 0)
+            - (Number(owner.pos?.[0]) || 0)
+        ) <= 8
+        && Math.abs(
+            (Number(companion.pos?.[1]) || 0)
+            - expectedY
+        ) <= 12
+    );
+}
+
+
+function companionAvailableTo(node, companion, companionType) {
+    if (
+        !companion
+        || companion === node
+        || companion.type !== companionType
+    ) {
+        return false;
+    }
+
+    const targets = companionTargetIds(node, companion);
+    if (
+        [...targets].some(
+            targetId => String(targetId) !== String(node.id)
+        )
+    ) {
+        return false;
+    }
+
+    const ownerId = companion.properties?.[OWNER_PROPERTY];
+    if (ownerId === undefined || ownerId === null) {
+        return true;
+    }
+    if (String(ownerId) === String(node.id)) {
+        return true;
+    }
+
+    const owner = nodeById(node, ownerId);
+    if (!owner || !isMainNodeType(owner.type)) {
+        return true;
+    }
+    if (
+        String(owner.properties?.[BUNDLE_PROPERTY])
+        === String(companion.id)
+    ) {
+        return false;
+    }
+    if (linkedCompanion(owner) === companion) {
+        return false;
+    }
+    return !companionPositionedFor(owner, companion);
+}
+
+
+function closestAvailableCompanion(node, companionType, candidates) {
+    return candidates
+        .filter(companion => companionAvailableTo(
+            node,
+            companion,
+            companionType,
+        ))
+        .sort(
+            (left, right) => (
+                companionPositionDistance(node, left)
+                - companionPositionDistance(node, right)
+            )
+        )[0] || null;
+}
+
+
 function linkedCompanion(node) {
     if (!node?.graph) {
         return null;
@@ -267,17 +416,64 @@ function findCompanion(node) {
         node,
         node?.properties?.[BUNDLE_PROPERTY]
     );
-    if (stored?.type === companionType) {
+    if (
+        companionAvailableTo(
+            node,
+            stored,
+            companionType,
+        )
+    ) {
         return stored;
     }
 
-    return graphNodes(node?.graph).find(
+    const candidates = graphNodes(node?.graph).filter(
+        entry => entry?.type === companionType
+    );
+    const owned = candidates.find(
         entry => (
-            entry?.type === companionType
-            && String(entry?.properties?.[OWNER_PROPERTY])
-                === String(node?.id)
+            String(entry?.properties?.[OWNER_PROPERTY])
+            === String(node?.id)
+            && companionAvailableTo(
+                node,
+                entry,
+                companionType,
+            )
         )
-    ) || null;
+    );
+    if (owned) {
+        return owned;
+    }
+
+    const storedId = node?.properties?.[BUNDLE_PROPERTY];
+    if (storedId !== undefined && storedId !== null) {
+        const cloned = closestAvailableCompanion(
+            node,
+            companionType,
+            candidates.filter(entry => (
+                String(entry.id) !== String(storedId)
+                && configureSourceIds.get(entry)
+                    === String(storedId)
+            )),
+        );
+        if (cloned) {
+            return cloned;
+        }
+    }
+
+    const sourceId = configureSourceIds.get(node);
+    const isClone = (
+        sourceId !== undefined
+        && String(sourceId) !== String(node?.id)
+    );
+    if (!isClone && (storedId === undefined || storedId === null)) {
+        return null;
+    }
+
+    return closestAvailableCompanion(
+        node,
+        companionType,
+        candidates,
+    );
 }
 
 
@@ -353,6 +549,7 @@ function ensureCompanion(node) {
     companion.properties ||= {};
     node.properties[BUNDLE_PROPERTY] = companion.id;
     companion.properties[OWNER_PROPERTY] = node.id;
+    resolvedCompanions.set(node, companion);
 
     if (node.type === "PonyMultiImageResize") {
         const slot = inputSlot(node, "result_bundle");
@@ -394,6 +591,7 @@ function ensureCompanion(node) {
     }
 
     moveCompanion(node, companion);
+    resolvedCompanions.set(node, companion);
     node.graph.setDirtyCanvas?.(true, true);
     return companion;
 }
@@ -426,11 +624,11 @@ function installCompanionFollowLoop() {
             if (!MAIN_NODE_TYPES.has(node?.type)) {
                 continue;
             }
-            const companion = nodeById(
-                node,
-                node.properties?.[BUNDLE_PROPERTY],
-            );
-            if (companion) {
+            const companion = resolvedCompanions.get(node);
+            if (
+                companion
+                && nodeById(node, companion.id) === companion
+            ) {
                 moveCompanion(node, companion);
             }
         }
@@ -450,11 +648,16 @@ function scheduleCompact(node, config) {
         compactTimers.delete(node);
         compactImageInputs(node, config);
         compactImageOutputs(node, config);
-        requestAnimationFrame(() => {
+        const arrange = () => {
             node.arrange?.();
             node.setDirtyCanvas?.(true, true);
             node.graph?.setDirtyCanvas?.(true, true);
-        });
+        };
+        if (typeof requestAnimationFrame === "function") {
+            requestAnimationFrame(arrange);
+        } else {
+            arrange();
+        }
     }, 16);
     compactTimers.set(node, timer);
 }
@@ -695,6 +898,7 @@ app.registerExtension({
                 nodeType.prototype.onRemoved;
 
             nodeType.prototype.onNodeCreated = function () {
+                resolvedCompanions.delete(this);
                 const result = originalCreated?.apply(
                     this,
                     arguments
@@ -704,6 +908,8 @@ app.registerExtension({
             };
 
             nodeType.prototype.onConfigure = function () {
+                rememberConfigureSource(this, arguments[0]);
+                resolvedCompanions.delete(this);
                 const result = originalConfigure?.apply(
                     this,
                     arguments
@@ -749,6 +955,7 @@ app.registerExtension({
             };
 
             nodeType.prototype.onConnectionsChange = function () {
+                resolvedCompanions.delete(this);
                 const result = originalConnectionsChange?.apply(
                     this,
                     arguments
@@ -759,6 +966,7 @@ app.registerExtension({
 
             nodeType.prototype.onRemoved = function () {
                 const companion = findCompanion(this);
+                resolvedCompanions.delete(this);
                 const result = originalRemoved?.apply(
                     this,
                     arguments
@@ -794,6 +1002,7 @@ app.registerExtension({
         };
 
         nodeType.prototype.onConfigure = function () {
+            rememberConfigureSource(this, arguments[0]);
             const result = originalConfigure?.apply(this, arguments);
             applyWidgetLabels(this, config);
             scheduleCompact(this, config);
